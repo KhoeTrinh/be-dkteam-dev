@@ -1,7 +1,10 @@
-import { Controller, Delete, Get, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Post, Put } from '@nestjs/common';
+import { SignupDto } from './dto/signup.dto';
+import { UsersService } from './users.service';
 
 @Controller('users')
 export class UsersController {
+    constructor(private userService: UsersService) {}
     // For users & Admin
     @Get('/')
     Check() {}
@@ -10,7 +13,9 @@ export class UsersController {
     Login() {}
 
     @Post('/signup')
-    Signup() {}
+    Signup(@Body() data: SignupDto) {
+        return this.userService.signup(data)
+    }
 
     @Post('/logout')
     Logout() {}
