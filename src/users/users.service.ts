@@ -37,12 +37,11 @@ export class UsersService {
       where: { email: data.email },
     });
     if (!user) throw new HttpException('User not found', 400);
-    const hash = await this.hashPass(data.password);
-    const isMatch = await bcrypt.compare(user.password, hash);
+    const isMatch = await bcrypt.compare(data.password, user.password);
     if (!isMatch) throw new HttpException('Password does not match', 400);
-    const {password: _, ...userData} = user
-    const token = this.jwtService.sign(userData)
-    return {user: userData, token};
+    const { password: _, ...userData } = user;
+    const token = this.jwtService.sign(userData);
+    return { user: userData, token };
   }
 
   async signup({ password, ...data }: Prisma.UserCreateInput) {
@@ -66,22 +65,30 @@ export class UsersService {
   async updateById(id: string, data: UpdateDto) {
     const user = await this.prisma.user.findUnique({ where: { id: id } });
     if (!user) throw new HttpException('User not found', 400);
-    const findUser = await this.prisma.user.findUnique({
-      where: { email: data.email },
-    });
-    if (findUser) throw new HttpException('Email has already existed', 400);
-    const findHash = await this.hashPass(data.prevPassword)
-    const isMatch = await bcrypt.compare(user.password, findHash)
-    if (!isMatch)
+    if (
+      await this.prisma.user.findUnique({
+        where: { email: data.email, NOT: { id: id } },
+      })
+    )
+      throw new HttpException('Email has already existed', 400);
+    if (!(await bcrypt.compare(data.prevPassword, user.password)))
       throw new HttpException('Old password does not match', 400);
     if (data.password !== data.confirmPassword)
       throw new HttpException('Confirm password does not match', 400);
-    const hash = await this.hashPass(data.password);
-    const { prevPassword: _, password: __, confirmPassword: ___, ...userData } = data;
-    return this.prisma.user.update({
-      where: { id: id },
-      data: { password: hash, ...userData },
+    const updatedData = {
+      ...data,
+      password: data.password
+        ? await this.hashPass(data.password)
+        : user.password,
+    };
+    delete updatedData.prevPassword;
+    delete updatedData.confirmPassword;
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id },
+      data: updatedData,
     });
+    return updatedUser;
   }
 
   deleteById() {}
