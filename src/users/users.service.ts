@@ -5,32 +5,37 @@ import { LoginDto } from './dto/login.dto';
 
 @Injectable()
 export class UsersService {
-    constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) {}
 
-    check() {}
+  check() {}
 
-    async login(data: LoginDto) {
-        const user = await this.prisma.user.findUnique({where: {email: data.email}})
-        if(!user) throw new HttpException('User not found', 400)
-        if(user.password !== data.password) throw new HttpException('Password does not match', 400)
-        return user
-    }
+  async login(data: LoginDto) {
+    const user = await this.prisma.user.findUnique({
+      where: { email: data.email },
+    });
+    if (!user) throw new HttpException('User not found', 400);
+    if (user.password !== data.password)
+      throw new HttpException('Password does not match', 400);
+    return user;
+  }
 
-    signup(data: Prisma.UserCreateInput) {
-        return this.prisma.user.create({ data: data})
-    }
+  signup(data: Prisma.UserCreateInput) {
+    return this.prisma.user.create({ data: data });
+  }
 
-    logout() {}
+  logout() {
+    return 'Ok'
+  }
 
-    updateById() {}
+  updateById() {}
 
-    deleteById() {}
+  deleteById() {}
 
-    allUsers() {}
+  allUsers() {}
 
-    userById() {}
+  userById() {}
 
-    updateByIdAdmin() {}
+  updateByIdAdmin() {}
 
-    deleteByIdAdmin() {}
+  deleteByIdAdmin() {}
 }

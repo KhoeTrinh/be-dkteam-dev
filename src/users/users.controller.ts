@@ -20,19 +20,18 @@ export class UsersController {
 
   @Post('/login')
   async Login(@Body() data: LoginDto) {
-    return {
-      message: await this.userService.login(data),
-      statusCode: 200,
-    };
+    return { message: await this.userService.login(data), statusCode: 200 };
   }
 
   @Post('/signup')
-  Signup(@Body() data: SignupDto) {
-    return this.userService.signup(data);
+  async Signup(@Body() data: SignupDto) {
+    return { message: await this.userService.signup(data), statusCode: 201 };
   }
 
   @Post('/logout')
-  Logout() {}
+  Logout() {
+    return { message: this.userService.logout(), statusCode: 204 };
+  }
 
   @Put('/:id')
   UpdateById() {}
