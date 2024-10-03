@@ -3,6 +3,8 @@ import {
   Controller,
   Delete,
   Get,
+  Param,
+  ParseIntPipe,
   Post,
   Put,
   Req,
@@ -11,9 +13,9 @@ import {
 import { SignupDto } from './dto/signup.dto';
 import { UsersService } from './users.service';
 import { LoginDto } from './dto/login.dto';
-import { LocalGuard } from './guards/local.guard';
 import { Request } from 'express';
 import { JwtGuard } from './guards/jwt.guard';
+import { UpdateDto } from './dto/update.dto';
 
 @Controller('users')
 export class UsersController {
@@ -30,10 +32,11 @@ export class UsersController {
   }
 
   @Post('/login')
-  @UseGuards(LocalGuard)
   async Login(@Req() req: Request, @Body() data: LoginDto) {
+    const result = await this.userService.login(data)
+    req.user = result.token
     return {
-      message: await this.userService.login(data),
+      message: result.user,
       token: req.user,
       statusCode: 200,
     };
@@ -56,7 +59,12 @@ export class UsersController {
   }
 
   @Put('/:id')
-  UpdateById() {}
+  async UpdateById(@Param('id') id: string, @Body() data: UpdateDto) {
+    return {
+      message: await this.userService.updateById(id, data),
+      statusCode: 200,
+    }
+  }
 
   @Delete('/:id')
   DeleteById() {}

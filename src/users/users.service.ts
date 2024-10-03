@@ -4,6 +4,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { UpdateDto } from './dto/update.dto';
 
 @Injectable()
 export class UsersService {
@@ -36,10 +37,12 @@ export class UsersService {
       where: { email: data.email },
     });
     if (!user) throw new HttpException('User not found', 400);
-    const hash = await this.hashPass(user.password);
-    const isMatch = await bcrypt.compare(data.password, hash);
+    const hash = await this.hashPass(data.password);
+    const isMatch = await bcrypt.compare(user.password, hash);
     if (!isMatch) throw new HttpException('Password does not match', 400);
-    return user;
+    const {password: _, ...userData} = user
+    const token = this.jwtService.sign(userData)
+    return {user: userData, token};
   }
 
   async signup({ password, ...data }: Prisma.UserCreateInput) {
@@ -60,7 +63,26 @@ export class UsersService {
     return 'Ok';
   }
 
-  updateById() {}
+  async updateById(id: string, data: UpdateDto) {
+    const user = await this.prisma.user.findUnique({ where: { id: id } });
+    if (!user) throw new HttpException('User not found', 400);
+    const findUser = await this.prisma.user.findUnique({
+      where: { email: data.email },
+    });
+    if (findUser) throw new HttpException('Email has already existed', 400);
+    const findHash = await this.hashPass(data.prevPassword)
+    const isMatch = await bcrypt.compare(user.password, findHash)
+    if (!isMatch)
+      throw new HttpException('Old password does not match', 400);
+    if (data.password !== data.confirmPassword)
+      throw new HttpException('Confirm password does not match', 400);
+    const hash = await this.hashPass(data.password);
+    const { prevPassword: _, password: __, confirmPassword: ___, ...userData } = data;
+    return this.prisma.user.update({
+      where: { id: id },
+      data: { password: hash, ...userData },
+    });
+  }
 
   deleteById() {}
 

@@ -4,7 +4,6 @@ import { UsersService } from './users.service';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
-import { LocalStrategy } from './strategy/local.strategy';
 import { JwtStrategy } from './strategy/jwt.strategy';
 
 @Module({
@@ -17,6 +16,6 @@ import { JwtStrategy } from './strategy/jwt.strategy';
     }),
   ],
   controllers: [UsersController],
-  providers: [UsersService, LocalStrategy, JwtStrategy],
+  providers: [UsersService, JwtStrategy],
 })
 export class UsersModule {}
