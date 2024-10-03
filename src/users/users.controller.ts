@@ -45,7 +45,7 @@ export class UsersController {
     req.user = result.token
     return {
       message: result.user,
-      token: result.token,
+      token: req.user,
       statusCode: 201,
     }
   }
