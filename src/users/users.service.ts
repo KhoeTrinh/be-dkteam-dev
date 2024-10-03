@@ -20,6 +20,10 @@ export class UsersService {
     }
   }
 
+  check() {
+    return 'Checked'
+  }
+
   async login(data: LoginDto) {
     const user = await this.prisma.user.findUnique({
       where: { email: data.email },

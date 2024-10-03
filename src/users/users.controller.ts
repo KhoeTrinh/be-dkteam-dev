@@ -24,7 +24,7 @@ export class UsersController {
   @UseGuards(JwtGuard)
   Check(@Req() req: Request) {
     return {
-      message: 'Checked',
+      message: this.userService.check(),
       user: req.user,
       statusCode: 200,
     };
