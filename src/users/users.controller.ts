@@ -6,27 +6,50 @@ import {
   HttpException,
   Post,
   Put,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
 import { SignupDto } from './dto/signup.dto';
 import { UsersService } from './users.service';
 import { LoginDto } from './dto/login.dto';
+import { LocalGuard } from './guards/local.guard';
+import { Request } from 'express';
+import { JwtGuard } from './guards/jwt.guard';
 
 @Controller('users')
 export class UsersController {
   constructor(private userService: UsersService) {}
   // For users & Admin
   @Get('/')
-  Check() {}
+  @UseGuards(JwtGuard)
+  Check(@Req() req: Request) {
+    return {
+      message: 'Checked',
+      user: req.user,
+      statusCode: 200,
+    };
+  }
 
   @Post('/login')
-  async Login(@Body() data: LoginDto) {
-    return { message: await this.userService.login(data), statusCode: 200 };
+  @UseGuards(LocalGuard)
+  async Login(@Req() req: Request, @Body() data: LoginDto) {
+    return {
+      message: await this.userService.login(data),
+      token: req.user,
+      statusCode: 200,
+    };
   }
 
   @Post('/signup')
-  async Signup(@Body() data: SignupDto) {
-    return { message: await this.userService.signup(data), statusCode: 201 };
+  @UseGuards(LocalGuard)
+  async Signup(@Req() req: Request, @Body() data: SignupDto) {
+    return {
+      message: await this.userService.signup(data),
+      token: req.user,
+      statusCode: 201,
+    };
   }
+
 
   @Post('/logout')
   Logout() {

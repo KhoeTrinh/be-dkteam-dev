@@ -2,12 +2,23 @@ import { HttpException, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private jwtService: JwtService,
+  ) {}
 
-  check() {}
+  async createToken({ email, password }: LoginDto) {
+    const user = await this.prisma.user.findUnique({ where: { email: email } });
+    if (!user) throw new HttpException('User not found', 400);
+    if (password === user.password) {
+      const { password, ...data } = user;
+      return this.jwtService.sign(data);
+    }
+  }
 
   async login(data: LoginDto) {
     const user = await this.prisma.user.findUnique({
@@ -24,7 +35,7 @@ export class UsersService {
   }
 
   logout() {
-    return 'Ok'
+    return 'Ok';
   }
 
   updateById() {}
