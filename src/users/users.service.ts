@@ -91,7 +91,12 @@ export class UsersService {
     return updatedUser;
   }
 
-  deleteById() {}
+  async deleteById(id: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: id } });
+    if (!user) throw new HttpException('User not found', 400);
+    await this.prisma.user.delete({ where: { id } });
+    return 'Ok'
+  }
 
   allUsers() {}
 

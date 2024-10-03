@@ -67,7 +67,12 @@ export class UsersController {
   }
 
   @Delete('/:id')
-  DeleteById() {}
+  async DeleteById(@Param('id') id: string) {
+    return {
+      message: await this.userService.deleteById(id),
+      statusCode: 204,
+    }
+  }
 
   // For Admin
   @Get('/admin')
