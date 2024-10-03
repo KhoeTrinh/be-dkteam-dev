@@ -3,7 +3,6 @@ import {
   Controller,
   Delete,
   Get,
-  HttpException,
   Post,
   Put,
   Req,
@@ -41,15 +40,15 @@ export class UsersController {
   }
 
   @Post('/signup')
-  @UseGuards(LocalGuard)
   async Signup(@Req() req: Request, @Body() data: SignupDto) {
+    const result = await this.userService.signup(data)
+    req.user = result.token
     return {
-      message: await this.userService.signup(data),
-      token: req.user,
+      message: result.user,
+      token: result.token,
       statusCode: 201,
-    };
+    }
   }
-
 
   @Post('/logout')
   Logout() {

@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
@@ -21,7 +22,7 @@ export class UsersService {
   }
 
   check() {
-    return 'Checked'
+    return 'Checked';
   }
 
   async login(data: LoginDto) {
@@ -34,8 +35,15 @@ export class UsersService {
     return user;
   }
 
-  signup(data: Prisma.UserCreateInput) {
-    return this.prisma.user.create({ data: data });
+  async signup({ password, ...data }: Prisma.UserCreateInput) {
+    const salt = await bcrypt.genSalt(10);
+    const hash = await bcrypt.hash(password, salt);
+    const user = await this.prisma.user.create({
+      data: { password: hash, ...data },
+    });
+    const { password: _, ...userData } = user;
+    const token = this.jwtService.sign(userData);
+    return { user: userData, token };
   }
 
   logout() {
