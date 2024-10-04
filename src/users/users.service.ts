@@ -1,10 +1,11 @@
 import { HttpException, Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UpdateDto } from './dto/update.dto';
+import { Request } from 'express';
 
 @Injectable()
 export class UsersService {
@@ -28,8 +29,8 @@ export class UsersService {
     return hash;
   }
 
-  check() {
-    return 'Checked';
+  check(req: Request) {
+    return { user: req.user as User, message: 'Checked' };
   }
 
   async login(data: LoginDto) {
@@ -95,7 +96,7 @@ export class UsersService {
     const user = await this.prisma.user.findUnique({ where: { id: id } });
     if (!user) throw new HttpException('User not found', 400);
     await this.prisma.user.delete({ where: { id } });
-    return 'Ok'
+    return 'Ok';
   }
 
   allUsers() {}

@@ -4,11 +4,11 @@ import {
   Delete,
   Get,
   Param,
-  ParseIntPipe,
   Post,
   Put,
   Req,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { SignupDto } from './dto/signup.dto';
 import { UsersService } from './users.service';
@@ -16,6 +16,7 @@ import { LoginDto } from './dto/login.dto';
 import { Request } from 'express';
 import { JwtGuard } from './guards/jwt.guard';
 import { UpdateDto } from './dto/update.dto';
+import { AdminInterceptor } from './intercepters/admin.interceptor';
 
 @Controller('users')
 export class UsersController {
@@ -24,17 +25,18 @@ export class UsersController {
   @Get('/')
   @UseGuards(JwtGuard)
   Check(@Req() req: Request) {
+    const res = this.userService.check(req);
     return {
-      message: this.userService.check(),
-      user: req.user,
+      message: res.message,
+      user: res.user,
       statusCode: 200,
     };
   }
 
   @Post('/login')
   async Login(@Req() req: Request, @Body() data: LoginDto) {
-    const result = await this.userService.login(data)
-    req.user = result.token
+    const result = await this.userService.login(data);
+    req.user = result.token;
     return {
       message: result.user,
       token: req.user,
@@ -44,13 +46,13 @@ export class UsersController {
 
   @Post('/signup')
   async Signup(@Req() req: Request, @Body() data: SignupDto) {
-    const result = await this.userService.signup(data)
-    req.user = result.token
+    const result = await this.userService.signup(data);
+    req.user = result.token;
     return {
       message: result.user,
       token: req.user,
       statusCode: 201,
-    }
+    };
   }
 
   @Post('/logout')
@@ -63,7 +65,7 @@ export class UsersController {
     return {
       message: await this.userService.updateById(id, data),
       statusCode: 200,
-    }
+    };
   }
 
   @Delete('/:id')
@@ -71,19 +73,27 @@ export class UsersController {
     return {
       message: await this.userService.deleteById(id),
       statusCode: 204,
-    }
+    };
   }
 
   // For Admin
   @Get('/admin')
+  @UseGuards(JwtGuard)
+  @UseInterceptors(AdminInterceptor)
   AllUsers() {}
 
   @Get('/:id/admin')
+  @UseGuards(JwtGuard)
+  @UseInterceptors(AdminInterceptor)
   UserById() {}
 
   @Put('/:id/admin')
+  @UseGuards(JwtGuard)
+  @UseInterceptors(AdminInterceptor)
   UpdateByIdAdmin() {}
 
   @Delete('/:id/admin')
+  @UseGuards(JwtGuard)
+  @UseInterceptors(AdminInterceptor)
   DeleteByIdAdmin() {}
 }
