@@ -6,6 +6,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UpdateDto } from './dto/update.dto';
 import { Request } from 'express';
+import { UpdateAdminDto } from './dto/updateAdmin.dto';
 
 @Injectable()
 export class UsersService {
@@ -126,7 +127,9 @@ export class UsersService {
     return user
   }
 
-  updateByIdAdmin() {}
+  updateByIdAdmin(id: string, data: UpdateAdminDto) {
+    return this.updateById(id, data)
+  }
 
   deleteByIdAdmin() {}
 }

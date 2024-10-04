@@ -17,6 +17,7 @@ import { Request } from 'express';
 import { JwtGuard } from './guards/jwt.guard';
 import { UpdateDto } from './dto/update.dto';
 import { AdminInterceptor } from './intercepters/admin.interceptor';
+import { UpdateAdminDto } from './dto/updateAdmin.dto';
 
 @Controller('users')
 export class UsersController {
@@ -96,7 +97,12 @@ export class UsersController {
   @Put('/:id/admin')
   @UseGuards(JwtGuard)
   @UseInterceptors(AdminInterceptor)
-  UpdateByIdAdmin() {}
+  async UpdateByIdAdmin(@Param('id') id: string, @Body() data: UpdateAdminDto) {
+    return {
+      message: await this.userService.updateById(id, data),
+      statusCode: 200,
+    };
+  }
 
   @Delete('/:id/admin')
   @UseGuards(JwtGuard)
