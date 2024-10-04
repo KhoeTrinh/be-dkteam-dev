@@ -57,6 +57,7 @@ export class UsersController {
   }
 
   @Post('/logout')
+  @UseGuards(JwtGuard)
   Logout() {
     return { message: this.userService.logout(), statusCode: 204 };
   }
@@ -79,9 +80,9 @@ export class UsersController {
 
   @Delete('/:id')
   @UseGuards(JwtGuard)
-  async DeleteById(@Param('id') id: string) {
+  async DeleteById(@Req() req: Request, @Param('id') id: string) {
     return {
-      message: await this.userService.deleteById(id),
+      message: await this.userService.deleteById(id, req),
       statusCode: 204,
     };
   }
@@ -117,5 +118,10 @@ export class UsersController {
   @Delete('/:id/admin')
   @UseGuards(JwtGuard)
   @UseInterceptors(AdminInterceptor)
-  DeleteByIdAdmin() {}
+  async DeleteByIdAdmin(@Param('id') id: string) {
+    return {
+      message: await this.userService.deleteByIdAdmin(id),
+      statusCode: 204,
+    };
+  }
 }

@@ -101,9 +101,12 @@ export class UsersService {
     return { user: updatedUser, token };
   }
 
-  async deleteById(id: string) {
+  async deleteById(id: string, req: Request) {
+    const User = req.user as User;
     const user = await this.prisma.user.findUnique({ where: { id: id } });
     if (!user) throw new HttpException('User not found', 400);
+    if (User.id !== user.id)
+      throw new HttpException('You can not delete another user', 400);
     await this.prisma.user.delete({ where: { id } });
     return 'Ok';
   }
@@ -146,9 +149,13 @@ export class UsersService {
         400,
       );
     }
-    if ((await this.prisma.user.findMany({
-      where: { id: { in: idArray } },
-    })).length !== idArray.length)
+    if (
+      (
+        await this.prisma.user.findMany({
+          where: { id: { in: idArray } },
+        })
+      ).length !== idArray.length
+    )
       throw new HttpException('One or more Ids are invalid', 400);
     const result = [];
     for (const userid of idArray) {
@@ -170,5 +177,19 @@ export class UsersService {
     return result;
   }
 
-  deleteByIdAdmin() {}
+  async deleteByIdAdmin(id: string) {
+    const idArray = id.split(',');
+    if (new Set(idArray).size !== idArray.length)
+      throw new HttpException('Duplicate Id are not allowed', 400);
+    if (
+      (
+        await this.prisma.user.findMany({
+          where: { id: { in: idArray } },
+        })
+      ).length !== idArray.length
+    )
+      throw new HttpException('One or more Ids are invalid', 400);
+    await this.prisma.user.deleteMany({ where: { id: { in: idArray } } });
+    return 'Ok'
+  }
 }
