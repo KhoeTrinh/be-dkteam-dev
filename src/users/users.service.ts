@@ -99,7 +99,17 @@ export class UsersService {
     return 'Ok';
   }
 
-  allUsers() {}
+  allUsers() {
+    return this.prisma.user.findMany({
+      select: {
+        id: true,
+        userImage: true,
+        username: true,
+        email: true,
+        isAdmin: true,
+      },
+    });
+  }
 
   userById() {}
 

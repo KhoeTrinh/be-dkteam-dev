@@ -80,7 +80,9 @@ export class UsersController {
   @Get('/admin')
   @UseGuards(JwtGuard)
   @UseInterceptors(AdminInterceptor)
-  AllUsers() {}
+  AllUsers() {
+    return this.userService.allUsers()
+  }
 
   @Get('/:id/admin')
   @UseGuards(JwtGuard)
