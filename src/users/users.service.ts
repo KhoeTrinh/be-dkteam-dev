@@ -6,7 +6,9 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { Request } from 'express';
 import { UpdateDto } from './dto/update.dto';
-import { UpdateAdminDtoList } from './dto/updateAdmin.dto';
+import { UpdateAdminDto } from './dto/updateAdmin.dto';
+import { validateSync } from 'class-validator';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class UsersService {
@@ -133,18 +135,39 @@ export class UsersService {
     return user;
   }
 
-  async updateByIdAdmin(id: string, data: UpdateAdminDtoList) {
+  async updateByIdAdmin(id: string, data: Record<string, UpdateAdminDto>) {
     const idArray = id.split(',');
-    const uniqueId = new Set(idArray);
-    if (uniqueId.size !== idArray.length)
+    if (new Set(idArray).size !== idArray.length)
       throw new HttpException('Duplicate Id are not allowed', 400);
-    const users = await this.prisma.user.findMany({
+    const bodyIds = Object.keys(data);
+    if (idArray.length !== bodyIds.length) {
+      throw new HttpException(
+        `Mismatch between URL IDs and request body IDs. URL contains ${idArray.length} IDs, but body contains ${bodyIds.length} IDs.`,
+        400,
+      );
+    }
+    if ((await this.prisma.user.findMany({
       where: { id: { in: idArray } },
-    });
-    if (users.length !== idArray.length)
+    })).length !== idArray.length)
       throw new HttpException('One or more Ids are invalid', 400);
-    console.log(data);
-    return users;
+    const result = [];
+    for (const userid of idArray) {
+      const userdata = data[userid];
+      if (!userdata)
+        throw new HttpException(`No data provided for user Id: ${userid}`, 400);
+      const dto = plainToInstance(UpdateAdminDto, userdata);
+      if (validateSync(dto).length > 0)
+        throw new HttpException(`Validation failed for user Id: ${id}`, 400);
+      if (!(await this.prisma.user.findUnique({ where: { id: userid } })))
+        throw new HttpException(`User ${userid} not found`, 400);
+      const user = await this.prisma.user.update({
+        where: { id: userid },
+        data: dto,
+      });
+      delete user.password;
+      result.push(user);
+    }
+    return result;
   }
 
   deleteByIdAdmin() {}

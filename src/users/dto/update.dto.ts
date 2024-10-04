@@ -23,5 +23,5 @@ export class UpdateDto {
 
   @IsOptional()
   @IsString()
-  userPicture?: string;
+  userImage?: string;
 }

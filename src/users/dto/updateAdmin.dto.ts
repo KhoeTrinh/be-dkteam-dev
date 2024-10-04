@@ -1,5 +1,4 @@
-import { IsBoolean, IsOptional, IsString, IsObject, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsBoolean, IsOptional, IsString } from 'class-validator';
 
 export class UpdateAdminDto {
   @IsOptional()
@@ -8,16 +7,9 @@ export class UpdateAdminDto {
 
   @IsOptional()
   @IsString()
-  userPicture?: string;
+  userImage?: string;
 
   @IsOptional()
   @IsBoolean()
   isAdmin?: boolean;
-}
-
-export class UpdateAdminDtoList {
-  @IsObject()
-  @ValidateNested({ each: true })
-  @Type(() => UpdateAdminDto)
-  updates: { [key: string]: UpdateAdminDto };
 }
