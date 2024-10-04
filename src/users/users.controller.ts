@@ -17,6 +17,7 @@ import { Request } from 'express';
 import { JwtGuard } from './guards/jwt.guard';
 import { AdminInterceptor } from './intercepters/admin.interceptor';
 import { UpdateDto } from './dto/update.dto';
+import { UpdateAdminDtoList } from './dto/updateAdmin.dto';
 
 @Controller('users')
 export class UsersController {
@@ -103,7 +104,9 @@ export class UsersController {
   @Put('/:id/admin')
   @UseGuards(JwtGuard)
   @UseInterceptors(AdminInterceptor)
-  async UpdateByIdAdmin() {}
+  async UpdateByIdAdmin(@Param('id') id: string, @Body() data: UpdateAdminDtoList) {
+    return this.userService.updateByIdAdmin(id, data)
+  }
 
   @Delete('/:id/admin')
   @UseGuards(JwtGuard)

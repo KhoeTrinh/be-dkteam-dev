@@ -6,6 +6,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { Request } from 'express';
 import { UpdateDto } from './dto/update.dto';
+import { UpdateAdminDtoList } from './dto/updateAdmin.dto';
 
 @Injectable()
 export class UsersService {
@@ -79,8 +80,6 @@ export class UsersService {
       if (data.password !== data.confirmPassword)
         throw new HttpException('Confirm password does not match', 400);
     }
-    if (data.isAdmin !== undefined)
-      throw new HttpException('You cannot update admin status', 403);
 
     const updatedData = {
       ...data,
@@ -134,8 +133,18 @@ export class UsersService {
     return user;
   }
 
-  updateByIdAdmin() {
-
+  async updateByIdAdmin(id: string, data: UpdateAdminDtoList) {
+    const idArray = id.split(',');
+    const uniqueId = new Set(idArray);
+    if (uniqueId.size !== idArray.length)
+      throw new HttpException('Duplicate Id are not allowed', 400);
+    const users = await this.prisma.user.findMany({
+      where: { id: { in: idArray } },
+    });
+    if (users.length !== idArray.length)
+      throw new HttpException('One or more Ids are invalid', 400);
+    console.log(data);
+    return users;
   }
 
   deleteByIdAdmin() {}
