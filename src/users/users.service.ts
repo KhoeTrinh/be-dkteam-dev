@@ -4,9 +4,8 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { UpdateDto } from './dto/update.dto';
 import { Request } from 'express';
-import { UpdateAdminDto } from './dto/updateAdmin.dto';
+import { UpdateDto } from './dto/update.dto';
 
 @Injectable()
 export class UsersService {
@@ -14,15 +13,6 @@ export class UsersService {
     private prisma: PrismaService,
     private jwtService: JwtService,
   ) {}
-
-  async createToken({ email, password }: LoginDto) {
-    const user = await this.prisma.user.findUnique({ where: { email: email } });
-    if (!user) throw new HttpException('User not found', 400);
-    if (password === user.password) {
-      const { password, ...data } = user;
-      return this.jwtService.sign(data);
-    }
-  }
 
   async hashPass(password: string) {
     const salt = await bcrypt.genSalt(10);
@@ -64,19 +54,34 @@ export class UsersService {
     return 'Ok';
   }
 
-  async updateById(id: string, data: UpdateDto) {
+  async updateById(id: string, data: UpdateDto, req: Request) {
+    const User = req.user as User;
     const user = await this.prisma.user.findUnique({ where: { id: id } });
     if (!user) throw new HttpException('User not found', 400);
-    if (
-      await this.prisma.user.findUnique({
-        where: { email: data.email, NOT: { id: id } },
-      })
-    )
-      throw new HttpException('Email has already existed', 400);
-    if (!(await bcrypt.compare(data.prevPassword, user.password)))
-      throw new HttpException('Old password does not match', 400);
-    if (data.password !== data.confirmPassword)
-      throw new HttpException('Confirm password does not match', 400);
+    if (User.id !== user.id)
+      throw new HttpException('You can not updated another user', 400);
+    if (data.email && data.email !== user.email) {
+      const emailExists = await this.prisma.user.findUnique({
+        where: { email: data.email },
+      });
+      if (emailExists) {
+        throw new HttpException('Email has already existed', 400);
+      }
+    }
+    if (data.prevPassword || data.password || data.confirmPassword) {
+      if (!data.prevPassword || !data.password || !data.confirmPassword)
+        throw new HttpException(
+          'All password fields (prevPassword, password, confirmPassword) are required if 1 of them are provided.',
+          400,
+        );
+      if (!(await bcrypt.compare(data.prevPassword, user.password)))
+        throw new HttpException('Old password does not match', 400);
+      if (data.password !== data.confirmPassword)
+        throw new HttpException('Confirm password does not match', 400);
+    }
+    if (data.isAdmin !== undefined)
+      throw new HttpException('You cannot update admin status', 403);
+
     const updatedData = {
       ...data,
       password: data.password
@@ -90,7 +95,9 @@ export class UsersService {
       where: { id },
       data: updatedData,
     });
-    return updatedUser;
+    delete updatedUser.password;
+    const token = this.jwtService.sign(updatedUser);
+    return { user: updatedUser, token };
   }
 
   async deleteById(id: string) {
@@ -113,7 +120,7 @@ export class UsersService {
   }
 
   userById(id: string) {
-    const user =  this.prisma.user.findUnique({
+    const user = this.prisma.user.findUnique({
       where: { id },
       select: {
         id: true,
@@ -123,12 +130,12 @@ export class UsersService {
         isAdmin: true,
       },
     });
-    if(!user) throw new HttpException('User not found', 400)
-    return user
+    if (!user) throw new HttpException('User not found', 400);
+    return user;
   }
 
-  updateByIdAdmin(id: string, data: UpdateAdminDto) {
-    return this.updateById(id, data)
+  updateByIdAdmin() {
+
   }
 
   deleteByIdAdmin() {}
