@@ -111,7 +111,20 @@ export class UsersService {
     });
   }
 
-  userById() {}
+  userById(id: string) {
+    const user =  this.prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        userImage: true,
+        username: true,
+        email: true,
+        isAdmin: true,
+      },
+    });
+    if(!user) throw new HttpException('User not found', 400)
+    return user
+  }
 
   updateByIdAdmin() {}
 

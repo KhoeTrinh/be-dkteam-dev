@@ -61,6 +61,7 @@ export class UsersController {
   }
 
   @Put('/:id')
+  @UseGuards(JwtGuard)
   async UpdateById(@Param('id') id: string, @Body() data: UpdateDto) {
     return {
       message: await this.userService.updateById(id, data),
@@ -69,6 +70,7 @@ export class UsersController {
   }
 
   @Delete('/:id')
+  @UseGuards(JwtGuard)
   async DeleteById(@Param('id') id: string) {
     return {
       message: await this.userService.deleteById(id),
@@ -80,14 +82,16 @@ export class UsersController {
   @Get('/admin')
   @UseGuards(JwtGuard)
   @UseInterceptors(AdminInterceptor)
-  AllUsers() {
-    return this.userService.allUsers()
+  async AllUsers() {
+    return { message: await this.userService.allUsers(), statusCode: 200 };
   }
 
   @Get('/:id/admin')
   @UseGuards(JwtGuard)
   @UseInterceptors(AdminInterceptor)
-  UserById() {}
+  async UserById(@Param('id') id: string) {
+    return { message: await this.userService.userById(id), statusCode: 200 };
+  }
 
   @Put('/:id/admin')
   @UseGuards(JwtGuard)
