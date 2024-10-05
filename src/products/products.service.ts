@@ -1,13 +1,29 @@
 import { HttpException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateDto } from './dto/create.dto';
-import { connect } from 'http2';
 
 @Injectable()
 export class ProductsService {
   constructor(private prisma: PrismaService) {}
 
-  allProducts() {}
+  allProducts() {
+    return this.prisma.product.findMany({
+      select: {
+        id: true,
+        link: true,
+        title: true,
+        description: true,
+        publishDate: true,
+        author: {
+          select: {
+            authorProd: {
+              select: { id: true, userImage: true, username: true },
+            },
+          },
+        },
+      },
+    });
+  }
 
   productById() {}
 

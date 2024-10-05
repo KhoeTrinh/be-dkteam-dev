@@ -10,7 +10,9 @@ export class ProductsController {
 
     @Get('/')
     @UseGuards(JwtGuard)
-    AllProducts() {}
+    AllProducts() {
+        return this.productService.allProducts()
+    }
 
     @Get('/:id')
     @UseGuards(JwtGuard)
