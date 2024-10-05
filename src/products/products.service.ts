@@ -25,7 +25,27 @@ export class ProductsService {
     });
   }
 
-  productById() {}
+  async productById(id: string) {
+    const product = await this.prisma.product.findUnique({
+      where: { id: id },
+      select: {
+        id: true,
+        link: true,
+        title: true,
+        description: true,
+        publishDate: true,
+        author: {
+          select: {
+            authorProd: {
+              select: { id: true, userImage: true, username: true },
+            },
+          },
+        },
+      },
+    });
+    if (!product) throw new HttpException('Product not found', 400);
+    return product;
+  }
 
   async createProduct(data: CreateDto) {
     const findProduct = await this.prisma.product.findUnique({
