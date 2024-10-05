@@ -31,6 +31,7 @@ model Product {
   description  String     @db.VarChar(200)
   publishDate  DateTime   @default(now())
   author       UsersOnProducts[]
+  comments     Comment[]
 }
 
 model UsersOnProducts {
@@ -40,4 +41,13 @@ model UsersOnProducts {
   authorId     String
 
   @@id([authorProdId, authorId])
+}
+
+model Comment {
+  id           String     @id @default(uuid())
+  title        String     
+  description  String     @db.VarChar(200)
+  publishDate  DateTime   @default(now())
+  author       Product    @relation(fields: [authorId], references: [id])
+  authorId     String
 }
