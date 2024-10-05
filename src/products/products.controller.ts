@@ -54,5 +54,10 @@ export class ProductsController {
   @Delete('/:id')
   @UseGuards(JwtGuard)
   @UseInterceptors(AdminInterceptor)
-  DeleteProductById() {}
+  async DeleteProductById(@Param('id') id: string) {
+    return {
+      message: await this.productService.deleteProductById(id),
+      statusCode: 204,
+    };
+  }
 }

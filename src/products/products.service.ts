@@ -87,5 +87,10 @@ export class ProductsService {
 
   updateProductById() {}
 
-  deleteProductById() {}
+  async deleteProductById(id: string) {
+    const product = await this.prisma.product.findUnique({ where: { id: id } });
+    if(!product) throw new HttpException('Product not found', 400)
+    await this.prisma.product.delete({ where: {id: id}})
+    return 'Ok'
+  }
 }
