@@ -124,10 +124,7 @@ export class UsersService {
           const filteredAuthorProd = authorProd.map((ap) => ({
             author: ap.author,
           }));
-          return {
-            ...userWithoutPassword,
-            authorProd: filteredAuthorProd,
-          };
+          return { ...userWithoutPassword, authorProd: filteredAuthorProd };
         });
       });
   }
@@ -145,10 +142,7 @@ export class UsersService {
         const filteredAuthorProd = authorProd.map((ap) => ({
           author: ap.author,
         }));
-        return {
-          ...userWithoutPassword,
-          authorProd: filteredAuthorProd,
-        };
+        return { ...userWithoutPassword, authorProd: filteredAuthorProd };
       });
     if (!user) throw new HttpException('User not found', 400);
     return user;
