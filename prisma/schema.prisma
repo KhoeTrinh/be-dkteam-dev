@@ -21,13 +21,14 @@ model User {
   password     String
   isAdmin      Boolean?   @default(false)
   authorProd   UsersOnProducts[]
+  comments     Comment[]
 }
 
 model Product {
   id           String     @id @default(uuid())
   link         String 
-  productImage String
-  title        String
+  productImage String     @default("/assets/product-default-profile-image.jpg")
+  title        String     @unique
   description  String     @db.VarChar(200)
   publishDate  DateTime   @default(now())
   author       UsersOnProducts[]
@@ -48,6 +49,8 @@ model Comment {
   title        String     
   description  String     @db.VarChar(200)
   publishDate  DateTime   @default(now())
-  author       Product    @relation(fields: [authorId], references: [id])
-  authorId     String
+  author       User       @relation(fields: [authorId], references: [id])
+  authorId     String     @unique
+  product      Product    @relation(fields: [productId], references: [id])
+  productId    String     @unique
 }

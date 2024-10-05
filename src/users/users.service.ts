@@ -111,29 +111,61 @@ export class UsersService {
     return 'Ok';
   }
 
-  allUsers() {
-    return this.prisma.user.findMany({
-      select: {
-        id: true,
-        userImage: true,
-        username: true,
-        email: true,
-        isAdmin: true,
-      },
-    });
+  async allUsers() {
+    return this.prisma.user
+      .findMany({
+        include: {
+          authorProd: {
+            include: {
+              author: {
+                select: {
+                  title: true,
+                },
+              },
+            },
+          },
+        },
+      })
+      .then((users) => {
+        return users.map((user) => {
+          const { password, authorProd, ...userWithoutPassword } = user;
+          const filteredAuthorProd = authorProd.map((ap) => ({
+            author: ap.author,
+          }));
+          return {
+            ...userWithoutPassword,
+            authorProd: filteredAuthorProd,
+          };
+        });
+      });
   }
 
   userById(id: string) {
-    const user = this.prisma.user.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        userImage: true,
-        username: true,
-        email: true,
-        isAdmin: true,
-      },
-    });
+    const user = this.prisma.user
+      .findUnique({
+        where: { id },
+        include: {
+          authorProd: {
+            include: {
+              author: {
+                select: {
+                  title: true,
+                },
+              },
+            },
+          },
+        },
+      })
+      .then((user) => {
+        const { password, authorProd, ...userWithoutPassword } = user;
+        const filteredAuthorProd = authorProd.map((ap) => ({
+          author: ap.author,
+        }));
+        return {
+          ...userWithoutPassword,
+          authorProd: filteredAuthorProd,
+        };
+      });
     if (!user) throw new HttpException('User not found', 400);
     return user;
   }
@@ -190,6 +222,6 @@ export class UsersService {
     )
       throw new HttpException('One or more Ids are invalid', 400);
     await this.prisma.user.deleteMany({ where: { id: { in: idArray } } });
-    return 'Ok'
+    return 'Ok';
   }
 }
