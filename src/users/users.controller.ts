@@ -28,8 +28,8 @@ export class UsersController {
   Check(@Req() req: Request) {
     const res = this.userService.check(req);
     return {
-      message: res.message,
-      user: res.user,
+      status: res.message,
+      message: res.user,
       statusCode: 200,
     };
   }
