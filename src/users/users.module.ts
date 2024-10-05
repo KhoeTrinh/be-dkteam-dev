@@ -5,6 +5,8 @@ import { PrismaModule } from 'src/prisma/prisma.module';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './strategy/jwt.strategy';
+import { JwtGuard } from './guards/jwt.guard';
+import { AdminInterceptor } from './intercepters/admin.interceptor';
 
 @Module({
   imports: [
@@ -16,6 +18,7 @@ import { JwtStrategy } from './strategy/jwt.strategy';
     }),
   ],
   controllers: [UsersController],
-  providers: [UsersService, JwtStrategy],
+  providers: [UsersService, JwtGuard, JwtStrategy, AdminInterceptor],
+  exports: [UsersService, JwtGuard, JwtStrategy, AdminInterceptor]
 })
 export class UsersModule {}
