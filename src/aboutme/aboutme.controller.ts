@@ -5,6 +5,7 @@ import {
   Param,
   Post,
   Put,
+  Req,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -14,6 +15,7 @@ import { DevInterceptor } from 'src/users/intercepters/dev.interceptor';
 import { AdminInterceptor } from 'src/users/intercepters/admin.interceptor';
 import { CreateDto } from './dto/create.dto';
 import { UpdateDto } from './dto/update.dto';
+import { Request } from 'express';
 
 @Controller('aboutme')
 export class AboutmeController {
@@ -21,9 +23,9 @@ export class AboutmeController {
   @Post('/')
   @UseGuards(JwtGuard)
   @UseInterceptors(DevInterceptor)
-  async CreateAboutme(@Body() data: CreateDto) {
+  async CreateAboutme(@Req() req: Request, @Body() data: CreateDto) {
     return {
-      message: await this.aboutmeService.createAboutme(data),
+      message: await this.aboutmeService.createAboutme(data, req),
       statusCode: 200,
     };
   }
