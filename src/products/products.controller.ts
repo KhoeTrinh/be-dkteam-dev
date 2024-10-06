@@ -13,6 +13,7 @@ import { ProductsService } from './products.service';
 import { JwtGuard } from 'src/users/guards/jwt.guard';
 import { AdminInterceptor } from 'src/users/intercepters/admin.interceptor';
 import { CreateDto } from './dto/create.dto';
+import { UpdateDto } from './dto/update.dto';
 
 @Controller('products')
 export class ProductsController {
@@ -49,7 +50,12 @@ export class ProductsController {
   @Put('/:id')
   @UseGuards(JwtGuard)
   @UseInterceptors(AdminInterceptor)
-  UpdateProductById() {}
+  async UpdateProductById(@Param('id') id: string, @Body() data: UpdateDto) {
+    return {
+      message: await this.productService.updateProductById(id, data),
+      statusCode: 200
+    };
+  }
 
   @Delete('/:id')
   @UseGuards(JwtGuard)
