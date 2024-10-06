@@ -1,8 +1,9 @@
-import { Controller, Delete, Post, Put, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Delete, Param, Post, Put, UseGuards, UseInterceptors } from '@nestjs/common';
 import { AboutmeService } from './aboutme.service';
 import { JwtGuard } from 'src/users/guards/jwt.guard';
 import { DevInterceptor } from 'src/users/intercepters/dev.interceptor';
 import { AdminInterceptor } from 'src/users/intercepters/admin.interceptor';
+import { CreateDto } from './dto/create.dto';
 
 @Controller('aboutme')
 export class AboutmeController {
@@ -10,7 +11,12 @@ export class AboutmeController {
     @Post('/')
     @UseGuards(JwtGuard)
     @UseInterceptors(DevInterceptor)
-    CreateAboutme() {}
+    async CreateAboutme(@Body() data: CreateDto) {
+        return {
+            message: await this.aboutmeService.createAboutme(data),
+            statusCode: 200,
+        };
+    }
 
     @Put('/:id')
     @UseGuards(JwtGuard)

@@ -115,7 +115,8 @@ export class UsersService {
     return this.prisma.user
       .findMany({
         include: {
-          authorProd: { include: { author: { select: { title: true } } } },
+          authorProd: { include: { author: { select: { id: true } } } },
+          aboutme: { select: { id: true } }
         },
       })
       .then((users) => {
@@ -134,7 +135,8 @@ export class UsersService {
       .findUnique({
         where: { id },
         include: {
-          authorProd: { include: { author: { select: { title: true } } } },
+          authorProd: { include: { author: { select: { id: true } } } },
+          aboutme: { include: { author: { select: { id: true } } } },
         },
       })
       .then((user) => {
