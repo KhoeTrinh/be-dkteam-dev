@@ -137,13 +137,13 @@ export class UsersService {
       },
     })
     .then((user) => {
+      if(!user) throw new HttpException('User not found', 400)
       const { password, authorProd, ...userWithoutPassword } = user;
       const filteredAuthorProd = authorProd.map((ap) => ({
         author: ap.author,
       }));
       return { ...userWithoutPassword, authorProd: filteredAuthorProd };
     });
-    if (!user) throw new HttpException('User not found', 400);
     return user;
   }
 
