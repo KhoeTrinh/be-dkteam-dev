@@ -130,20 +130,21 @@ export class UsersService {
   }
 
   userById(id: string) {
-    const user = this.prisma.user.findUnique({
-      where: { id },
-      include: {
-        authorProd: { include: { author: { select: { title: true } } } },
-      },
-    })
-    .then((user) => {
-      if(!user) throw new HttpException('User not found', 400)
-      const { password, authorProd, ...userWithoutPassword } = user;
-      const filteredAuthorProd = authorProd.map((ap) => ({
-        author: ap.author,
-      }));
-      return { ...userWithoutPassword, authorProd: filteredAuthorProd };
-    });
+    const user = this.prisma.user
+      .findUnique({
+        where: { id },
+        include: {
+          authorProd: { include: { author: { select: { title: true } } } },
+        },
+      })
+      .then((user) => {
+        if (!user) throw new HttpException('User not found', 400);
+        const { password, authorProd, ...userWithoutPassword } = user;
+        const filteredAuthorProd = authorProd.map((ap) => ({
+          author: ap.author,
+        }));
+        return { ...userWithoutPassword, authorProd: filteredAuthorProd };
+      });
     return user;
   }
 
@@ -176,6 +177,11 @@ export class UsersService {
         throw new HttpException(`Validation failed for user Id: ${id}`, 400);
       if (!(await this.prisma.user.findUnique({ where: { id: userid } })))
         throw new HttpException(`User ${userid} not found`, 400);
+      if (dto.isAdmin === true && dto.isDev !== true)
+        throw new HttpException(
+          `If the user with id of ${userid} is an admin, he need to be a dev too`,
+          400,
+        );
       const user = await this.prisma.user.update({
         where: { id: userid },
         data: dto,
