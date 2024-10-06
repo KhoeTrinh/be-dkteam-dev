@@ -22,6 +22,20 @@ export class ProductsService {
             },
           },
         },
+        comments:{
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            author: {
+              select: {
+                id: true,
+                username: true,
+                userImage: true,
+              },
+            },
+          },
+        }
       },
     });
   }
