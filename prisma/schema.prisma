@@ -19,9 +19,11 @@ model User {
   username     String    
   email        String     @unique
   password     String
+  isDev        Boolean?   @default(false)
   isAdmin      Boolean?   @default(false)
   authorProd   UsersOnProducts[]
   comments     Comment[]
+  aboutme      Aboutme?
 }
 
 model Product {
@@ -53,4 +55,13 @@ model Comment {
   authorId     String     @unique
   product      Product    @relation(fields: [productId], references: [id], onUpdate: Cascade, onDelete: Cascade)
   productId    String     @unique
+}
+
+model Aboutme {
+  id           String     @id @default(uuid())
+  title        String     @unique
+  description  String     @db.VarChar(200)
+  image        String     @default("/assets/aboutme-default-profile-image.jpg")
+  author       User       @relation(fields: [authorId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  authorId     String     @unique
 }
