@@ -54,7 +54,12 @@ export class AboutmeController {
   @Put('/:id/admin')
   @UseGuards(JwtGuard)
   @UseInterceptors(AdminInterceptor)
-  UpdateAboutmeByIdAdmin() {}
+  async UpdateAboutmeByIdAdmin(@Param('id') id: string, @Body() data: UpdateDto) {
+    return {
+      message: await this.aboutmeService.updateAboutmeById(id, data),
+      statusCode: 200,
+    };
+  }
 
   @Delete('/:id/admin')
   @UseGuards(JwtGuard)
