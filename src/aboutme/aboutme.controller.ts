@@ -41,7 +41,12 @@ export class AboutmeController {
   @Delete('/:id')
   @UseGuards(JwtGuard)
   @UseInterceptors(DevInterceptor)
-  DeleteAboutmeById() {}
+  async DeleteAboutmeById(@Param('id') id: string) {
+    return {
+      message: await this.aboutmeService.deleteAboutmeById(id),
+      statusCode: 204,
+    };
+  }
 
   // For Admin
   @Put('/:id/admin')

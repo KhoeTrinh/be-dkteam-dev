@@ -15,8 +15,11 @@ export class AboutmeService {
       throw new HttpException('This title is already existed', 400);
     const findUser = await this.prisma.user.findUnique({
       where: { id: data.author },
+      include: { aboutme: true },
     });
     if (!findUser) throw new HttpException('This User Id was not found', 400);
+    if (findUser.aboutme)
+      throw new HttpException('You already have an aboutme', 400);
     return this.prisma.aboutme.create({
       data: { ...data, author: { connect: { id: data.author } } },
     });
@@ -24,13 +27,18 @@ export class AboutmeService {
 
   async updateAboutmeById(id: string, data: UpdateDto) {
     const aboutme = await this.prisma.aboutme.findUnique({ where: { id: id } });
-    if (!aboutme) throw new HttpException('User not found', 400);
+    if (!aboutme) throw new HttpException('About me not found', 400);
     if (data.title && data.title !== aboutme.title)
       throw new HttpException('This title is already existed', 400);
     return this.prisma.aboutme.update({ where: { id: id }, data: data });
   }
 
-  deleteAboutmeById() {}
+  async deleteAboutmeById(id: string) {
+    const aboutme = await this.prisma.aboutme.findUnique({ where: { id: id } });
+    if (!aboutme) throw new HttpException('About me not found', 400);
+    await this.prisma.aboutme.delete({ where: { id: id } });
+    return 'Ok';
+  }
 
   updateAboutmeByIdAdmin() {}
 
