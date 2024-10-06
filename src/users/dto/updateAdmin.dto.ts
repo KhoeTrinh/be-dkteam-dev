@@ -8,6 +8,10 @@ export class UpdateAdminDto {
   @IsOptional()
   @IsString()
   userImage?: string;
+  
+  @IsOptional()
+  @IsBoolean()
+  isDev?: boolean;
 
   @IsOptional()
   @IsBoolean()

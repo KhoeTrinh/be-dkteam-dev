@@ -14,6 +14,7 @@ import { JwtGuard } from 'src/users/guards/jwt.guard';
 import { AdminInterceptor } from 'src/users/intercepters/admin.interceptor';
 import { CreateDto } from './dto/create.dto';
 import { UpdateDto } from './dto/update.dto';
+import { DevInterceptor } from 'src/users/intercepters/dev.interceptor';
 
 @Controller('products')
 export class ProductsController {
@@ -39,7 +40,7 @@ export class ProductsController {
 
   @Post('/')
   @UseGuards(JwtGuard)
-  @UseInterceptors(AdminInterceptor)
+  @UseInterceptors(DevInterceptor)
   async CreateProduct(@Body() data: CreateDto) {
     return {
       message: await this.productService.createProduct(data),

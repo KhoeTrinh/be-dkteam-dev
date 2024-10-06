@@ -18,6 +18,7 @@ import { JwtGuard } from './guards/jwt.guard';
 import { AdminInterceptor } from './intercepters/admin.interceptor';
 import { UpdateDto } from './dto/update.dto';
 import { UpdateAdminDto } from './dto/updateAdmin.dto';
+import { DevInterceptor } from './intercepters/dev.interceptor';
 
 @Controller('users')
 export class UsersController {
@@ -32,6 +33,12 @@ export class UsersController {
       message: res.user,
       statusCode: 200,
     };
+  }
+  
+  @Get('/:id/admin')
+  @UseGuards(JwtGuard)
+  async UserById(@Param('id') id: string) {
+    return { message: await this.userService.userById(id), statusCode: 200 };
   }
 
   @Post('/login')
@@ -90,16 +97,9 @@ export class UsersController {
   // For Admin
   @Get('/admin')
   @UseGuards(JwtGuard)
-  @UseInterceptors(AdminInterceptor)
+  @UseInterceptors(DevInterceptor)
   async AllUsers() {
     return { message: await this.userService.allUsers(), statusCode: 200 };
-  }
-
-  @Get('/:id/admin')
-  @UseGuards(JwtGuard)
-  @UseInterceptors(AdminInterceptor)
-  async UserById(@Param('id') id: string) {
-    return { message: await this.userService.userById(id), statusCode: 200 };
   }
 
   @Put('/:id/admin')

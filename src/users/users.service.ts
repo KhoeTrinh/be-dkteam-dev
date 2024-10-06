@@ -130,20 +130,19 @@ export class UsersService {
   }
 
   userById(id: string) {
-    const user = this.prisma.user
-      .findUnique({
-        where: { id },
-        include: {
-          authorProd: { include: { author: { select: { title: true } } } },
-        },
-      })
-      .then((user) => {
-        const { password, authorProd, ...userWithoutPassword } = user;
-        const filteredAuthorProd = authorProd.map((ap) => ({
-          author: ap.author,
-        }));
-        return { ...userWithoutPassword, authorProd: filteredAuthorProd };
-      });
+    const user = this.prisma.user.findUnique({
+      where: { id },
+      include: {
+        authorProd: { include: { author: { select: { title: true } } } },
+      },
+    })
+    .then((user) => {
+      const { password, authorProd, ...userWithoutPassword } = user;
+      const filteredAuthorProd = authorProd.map((ap) => ({
+        author: ap.author,
+      }));
+      return { ...userWithoutPassword, authorProd: filteredAuthorProd };
+    });
     if (!user) throw new HttpException('User not found', 400);
     return user;
   }

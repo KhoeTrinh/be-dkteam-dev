@@ -7,6 +7,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './strategy/jwt.strategy';
 import { JwtGuard } from './guards/jwt.guard';
 import { AdminInterceptor } from './intercepters/admin.interceptor';
+import { DevInterceptor } from './intercepters/dev.interceptor';
 
 @Module({
   imports: [
@@ -18,7 +19,7 @@ import { AdminInterceptor } from './intercepters/admin.interceptor';
     }),
   ],
   controllers: [UsersController],
-  providers: [UsersService, JwtGuard, JwtStrategy, AdminInterceptor],
-  exports: [UsersService, JwtGuard, JwtStrategy, AdminInterceptor]
+  providers: [UsersService, JwtGuard, JwtStrategy, AdminInterceptor, DevInterceptor],
+  exports: [UsersService, JwtGuard, JwtStrategy, AdminInterceptor, DevInterceptor]
 })
 export class UsersModule {}
