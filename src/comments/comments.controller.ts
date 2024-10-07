@@ -9,10 +9,6 @@ import { Request } from 'express';
 export class CommentsController {
     constructor(private commentsService: CommentsService) {}
 
-    @Get('/')
-    @UseGuards(JwtGuard)
-    GetComments() {}
-
     @Post('/')
     @UseGuards(JwtGuard)
     async CreateComment(@Req() req: Request, @Body() data: CreateDto) {

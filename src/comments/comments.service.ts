@@ -8,8 +8,6 @@ import { User } from '@prisma/client';
 export class CommentsService {
   constructor(private prisma: PrismaService) {}
 
-  getComments() {}
-
   async createComment(data: CreateDto, req: Request) {
     const User = req.user as User;
     const findProduct = await this.prisma.product.findUnique({
