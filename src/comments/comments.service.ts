@@ -67,24 +67,47 @@ export class CommentsService {
       ).length !== idArray.length
     )
       throw new HttpException('One or more Ids are invalid', 400);
-      const result = [];
-      for (const commentId of idArray) {
-        const commentData = data[commentId];
-        if (!commentData)
-          throw new HttpException(`No data provided for comment Id: ${commentId}`, 400);
-        const dto = plainToInstance(UpdateDto, commentData);
-        if (validateSync(dto).length > 0)
-          throw new HttpException(`Validation failed for comment Id: ${id}`, 400);
-        if (!(await this.prisma.comment.findUnique({ where: { id: commentId } })))
-          throw new HttpException(`Comment ${commentId} not found`, 400);
-        const comment = await this.prisma.comment.update({
-          where: { id: commentId },
-          data: dto,
-        });
-        result.push(comment);
-      }
-      return result;
+    const result = [];
+    for (const commentId of idArray) {
+      const commentData = data[commentId];
+      if (!commentData)
+        throw new HttpException(
+          `No data provided for comment Id: ${commentId}`,
+          400,
+        );
+      const dto = plainToInstance(UpdateDto, commentData);
+      if (validateSync(dto).length > 0)
+        throw new HttpException(`Validation failed for comment Id: ${id}`, 400);
+      if (!(await this.prisma.comment.findUnique({ where: { id: commentId } })))
+        throw new HttpException(`Comment ${commentId} not found`, 400);
+      const comment = await this.prisma.comment.update({
+        where: { id: commentId },
+        data: dto,
+      });
+      result.push(comment);
+    }
+    return result;
   }
 
-  deleteCommentByIdAdmin() {}
+  async deleteCommentByIdAdmin(id: string) {
+    const idArray = id.split(',');
+    if (new Set(idArray).size !== idArray.length)
+      throw new HttpException('Duplicate Id are not allowed', 400);
+    if (
+      (
+        await this.prisma.comment.findMany({
+          where: { id: { in: idArray } },
+        })
+      ).length !== idArray.length
+    )
+      throw new HttpException('One or more Ids are invalid', 400);
+    for (const commentId of idArray) {
+      if (!(await this.prisma.comment.findUnique({ where: { id: commentId } })))
+        throw new HttpException(`Comment ${commentId} not found`, 400);
+      await this.prisma.comment.delete({
+        where: { id: commentId },
+      });
+    }
+    return 'Ok';
+  }
 }

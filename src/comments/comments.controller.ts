@@ -51,5 +51,10 @@ export class CommentsController {
     @Delete('/:id/admin')
     @UseGuards(JwtGuard)
     @UseInterceptors(AdminInterceptor)
-    DeleteCommentByIdAdmin() {}
+    async DeleteCommentByIdAdmin(@Param('id') id: string) {
+        return {
+            message: await this.commentsService.deleteCommentByIdAdmin(id),
+            statusCode: 204,
+        }
+    }
 }
