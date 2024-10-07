@@ -30,7 +30,12 @@ export class CommentsController {
 
     @Delete('/:id')
     @UseGuards(JwtGuard)
-    DeleteCommentById() {}
+    async DeleteCommentById(@Req() req: Request, @Param('id') id: string) {
+        return {
+            message: await this.commentsService.deleteCommentById(id, req),
+            statusCode: 204,
+        }
+    }
 
     // For Admin
     @Put('/:id/admin')

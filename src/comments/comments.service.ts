@@ -35,7 +35,17 @@ export class CommentsService {
     return this.prisma.comment.update({ where: { id: id }, data: data });
   }
 
-  deleteCommentById() {}
+  async deleteCommentById(id: string, req: Request) {
+    const findComment = await this.prisma.comment.findUnique({
+      where: { id: id },
+    });
+    if (!findComment) throw new HttpException('Comment not found', 400);
+    const User = req.user as User;
+    if (findComment.authorId !== User.id)
+      throw new HttpException('You can not update another user comment', 400);
+    await this.prisma.comment.delete({ where: { id: id }});
+    return 'Ok'
+  }
 
   updateCommentByIdAdmin() {}
 
