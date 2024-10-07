@@ -41,7 +41,12 @@ export class CommentsController {
     @Put('/:id/admin')
     @UseGuards(JwtGuard)
     @UseInterceptors(AdminInterceptor)
-    UpdateCommentByIdAdmin() {}
+    async UpdateCommentByIdAdmin(@Param('id') id: string, @Body() data: Record<string, UpdateDto>) {
+        return {
+            message: await this.commentsService.updateCommentByIdAdmin(id, data),
+            statusCode: 200,
+        }
+    }
     
     @Delete('/:id/admin')
     @UseGuards(JwtGuard)

@@ -52,9 +52,9 @@ model Comment {
   description  String     @db.VarChar(200)
   publishDate  DateTime   @default(now())
   author       User       @relation(fields: [authorId], references: [id], onUpdate: Cascade, onDelete: Cascade)
-  authorId     String     @unique
+  authorId     String     
   product      Product    @relation(fields: [productId], references: [id], onUpdate: Cascade, onDelete: Cascade)
-  productId    String     @unique
+  productId    String     
 }
 
 model Aboutme {
