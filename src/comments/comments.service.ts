@@ -3,6 +3,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateDto } from './dto/create.dto';
 import { Request } from 'express';
 import { User } from '@prisma/client';
+import { UpdateDto } from './dto/update.dto';
 
 @Injectable()
 export class CommentsService {
@@ -23,7 +24,16 @@ export class CommentsService {
     });
   }
 
-  updateCommentById() {}
+  async updateCommentById(id: string, data: UpdateDto, req: Request) {
+    const findComment = await this.prisma.comment.findUnique({
+      where: { id: id },
+    });
+    if (!findComment) throw new HttpException('Comment not found', 400);
+    const User = req.user as User;
+    if (findComment.authorId !== User.id)
+      throw new HttpException('You can not update another user comment', 400);
+    return this.prisma.comment.update({ where: { id: id }, data: data });
+  }
 
   deleteCommentById() {}
 

@@ -1,9 +1,10 @@
-import { Body, Controller, Delete, Get, Post, Put, Req, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Req, UseGuards, UseInterceptors } from '@nestjs/common';
 import { CommentsService } from './comments.service';
 import { JwtGuard } from 'src/users/guards/jwt.guard';
 import { AdminInterceptor } from 'src/users/intercepters/admin.interceptor';
 import { CreateDto } from './dto/create.dto';
 import { Request } from 'express';
+import { UpdateDto } from './dto/update.dto';
 
 @Controller('comments')
 export class CommentsController {
@@ -20,7 +21,12 @@ export class CommentsController {
 
     @Put('/:id')
     @UseGuards(JwtGuard)
-    UpdateCommentById() {}
+    async UpdateCommentById(@Req() req: Request, @Param('id') id: string, @Body() data: UpdateDto) {
+        return {
+            message: await this.commentsService.updateCommentById(id, data, req),
+            statusCode: 200,
+        }
+    }
 
     @Delete('/:id')
     @UseGuards(JwtGuard)
