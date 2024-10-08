@@ -9,9 +9,16 @@ import { UpdateDto } from './dto/update.dto';
 import { UpdateAdminDto } from './dto/updateAdmin.dto';
 import { validateSync } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
+import axios from 'axios';
 
 @Injectable()
 export class UsersService {
+  private readonly githubApiUrl = process.env.GITHUB_URL;
+  private readonly personalAccessToken = process.env.PERSONAL_ACCESS_TOKEN;
+  private readonly owner = process.env.OWNER;
+  private readonly repo = process.env.REPO;
+  private readonly message = process.env.MESSAGE;
+
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
@@ -23,8 +30,10 @@ export class UsersService {
     return hash;
   }
 
-  check(req: Request) {
-    return { user: req.user as User, message: 'Checked' };
+  async check(req: Request) {
+    const User = req.user as User;
+    const userimage = await this.getFileFromGithub(User.userImage);
+    return { user: User, message: 'Checked', image: userimage };
   }
 
   async login(data: LoginDto) {
@@ -116,7 +125,7 @@ export class UsersService {
       .findMany({
         include: {
           authorProd: { include: { author: { select: { id: true } } } },
-          aboutme: { select: { id: true } }
+          aboutme: { select: { id: true } },
         },
       })
       .then((users) => {
@@ -208,5 +217,54 @@ export class UsersService {
       throw new HttpException('One or more Ids are invalid', 400);
     await this.prisma.user.deleteMany({ where: { id: { in: idArray } } });
     return 'Ok';
+  }
+
+  async getFileFromGithub(path: string) {
+    if (!path) throw new HttpException('Please provide a path', 400);
+    const url = `${this.githubApiUrl}/repos/${this.owner}/${this.repo}/contents/${path}`;
+    try {
+      const res = await axios.get(url, {
+        headers: {
+          Authorization: `token ${this.personalAccessToken}`,
+        },
+      });
+      return res.data.content;
+    } catch {}
+  }
+
+  async uploadFileToGithub(fileContent: Buffer, path: string) {
+    if (!fileContent) throw new HttpException('Please provide a file', 400);
+    const url = `${this.githubApiUrl}/repos/${this.owner}/${this.repo}/contents/${path}`;
+    const encodedContent = fileContent.toString('base64');
+    let sha = null;
+    try {
+      const res = await axios.get(url, {
+        headers: {
+          Authorization: `token ${this.personalAccessToken}`,
+        },
+      });
+      if (res.status !== 200)
+        throw new HttpException('Invalid access token', 400);
+      sha = res.data.sha;
+    } catch {
+      throw new HttpException('Error fetching commit', 500);
+    }
+    const data = {
+      message: this.message,
+      content: encodedContent,
+      sha,
+    };
+    try {
+      const res = await axios.put(url, data, {
+        headers: {
+          Authorization: `token ${this.personalAccessToken}`,
+        },
+      });
+      if (res.status !== 200)
+        throw new HttpException('Invalid access token', 400);
+      return res.data;
+    } catch {
+      throw new HttpException('Error updating file', 500);
+    }
   }
 }

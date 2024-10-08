@@ -26,12 +26,13 @@ export class UsersController {
   // For users & Admin
   @Get('/')
   @UseGuards(JwtGuard)
-  Check(@Req() req: Request) {
-    const res = this.userService.check(req);
+  async Check(@Req() req: Request) {
+    const res = await this.userService.check(req);
     return {
       status: res.message,
       message: res.user,
       statusCode: 200,
+      image: res.image
     };
   }
   
