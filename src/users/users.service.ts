@@ -33,7 +33,11 @@ export class UsersService {
   async check(req: Request) {
     const User = req.user as User;
     const userimage = await this.getFileFromGithub(User.userImage);
-    return { user: User, message: 'Checked', image: userimage };
+    return {
+      user: User,
+      message: 'Checked',
+      image: userimage || User.userImage,
+    };
   }
 
   async login(data: LoginDto) {
@@ -139,22 +143,35 @@ export class UsersService {
       });
   }
 
-  userById(id: string) {
-    const user = this.prisma.user
+  async userById(id: string) {
+    const user = await this.prisma.user
       .findUnique({
         where: { id },
         include: {
           authorProd: { include: { author: { select: { id: true } } } },
-          aboutme: { include: { author: { select: { id: true } } } },
+          aboutme: { select: { image: true } },
         },
       })
-      .then((user) => {
+      .then(async (user) => {
         if (!user) throw new HttpException('User not found', 400);
-        const { password, authorProd, ...userWithoutPassword } = user;
+        const {
+          password,
+          authorProd,
+          aboutme,
+          userImage,
+          ...userWithoutPassword
+        } = user;
+        const userimage = await this.getFileFromGithub(userImage);
+        const aboutmeimage = await this.getFileFromGithub(aboutme.image);
         const filteredAuthorProd = authorProd.map((ap) => ({
           author: ap.author,
         }));
-        return { ...userWithoutPassword, authorProd: filteredAuthorProd };
+        return {
+          ...userWithoutPassword,
+          authorProd: filteredAuthorProd,
+          image: userimage || userImage,
+          aboutme: { image: aboutmeimage || aboutmeimage.image },
+        };
       });
     return user;
   }
