@@ -74,12 +74,25 @@ export class UsersService {
     return 'Ok';
   }
 
-  async updateById(id: string, data: UpdateDto, req: Request) {
+  async updateById(
+    id: string,
+    data: UpdateDto,
+    req: Request,
+    fileContent: Buffer,
+    path: string,
+  ) {
     const User = req.user as User;
     const user = await this.prisma.user.findUnique({ where: { id: id } });
     if (!user) throw new HttpException('User not found', 400);
     if (User.id !== user.id)
       throw new HttpException('You can not updated another user', 400);
+    if(path) {
+      await this.uploadFileToGithub(fileContent, path)
+      const updatedUser = await this.prisma.user.update({ where: {id: id}, data: { userImage: path}})
+      delete updatedUser.password
+      const token = this.jwtService.sign(updatedUser)
+      return { user: updatedUser, token}
+    }
     if (data.email && data.email !== user.email) {
       const emailExists = await this.prisma.user.findUnique({
         where: { email: data.email },
@@ -143,7 +156,7 @@ export class UsersService {
         aboutme: { select: { title: true, description: true, image: true } },
       },
     });
-    const processedUsers = []
+    const processedUsers = [];
     for (const user of userArray) {
       const { userImage, authorProd, aboutme, ...userData } = user;
       const userimage = await this.getFileFromGithub(userImage);
@@ -164,7 +177,7 @@ export class UsersService {
           },
         };
       });
-      processedUsers.push ({
+      processedUsers.push({
         ...userData,
         imagePath: userImage,
         image: userimage || null,

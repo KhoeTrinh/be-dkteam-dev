@@ -20,8 +20,4 @@ export class UpdateDto {
   @IsOptional()
   @IsString()
   confirmPassword?: string;
-
-  @IsOptional()
-  @IsString()
-  userImage?: string;
 }
