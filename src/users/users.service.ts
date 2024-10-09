@@ -32,7 +32,7 @@ export class UsersService {
 
   async check(req: Request) {
     const User = req.user as User;
-      let userimage = null;
+    let userimage = null;
     if (User.userImage) {
       userimage = await this.getFileFromGithub(User.userImage);
     }
@@ -43,7 +43,6 @@ export class UsersService {
       image: userimage || null,
     };
   }
-  
 
   async login(data: LoginDto) {
     const user = await this.prisma.user.findUnique({
@@ -130,22 +129,52 @@ export class UsersService {
   }
 
   async allUsers() {
-    return this.prisma.user
-      .findMany({
-        include: {
-          authorProd: { include: { author: { select: { id: true } } } },
-          aboutme: { select: { id: true } },
+    const userArray = await this.prisma.user.findMany({
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        userImage: true,
+        authorProd: {
+          select: {
+            author: { select: { title: true, productImage: true } },
+          },
         },
-      })
-      .then((users) => {
-        return users.map((user) => {
-          const { password, authorProd, ...userWithoutPassword } = user;
-          const filteredAuthorProd = authorProd.map((ap) => ({
-            author: ap.author,
-          }));
-          return { ...userWithoutPassword, authorProd: filteredAuthorProd };
-        });
+        aboutme: { select: { title: true, description: true, image: true } },
+      },
+    });
+    const processedUsers = []
+    for (const user of userArray) {
+      const { userImage, authorProd, aboutme, ...userData } = user;
+      const userimage = await this.getFileFromGithub(userImage);
+      let aboutmeimage = null;
+      if (aboutme && aboutme.image) {
+        aboutmeimage = await this.getFileFromGithub(aboutme.image);
+      }
+      const filteredAuthorProd = authorProd.map(async (ap) => {
+        let productimage = null;
+        if (ap.author.productImage) {
+          productimage = await this.getFileFromGithub(ap.author.productImage);
+        }
+        return {
+          author: {
+            title: ap.author.title,
+            productImagePath: ap.author.productImage || null,
+            productImage: productimage || null,
+          },
+        };
       });
+      processedUsers.push ({
+        ...userData,
+        imagePath: userImage,
+        image: userimage || null,
+        aboutme: aboutme
+          ? { image: aboutmeimage || null, imagePath: aboutme.image }
+          : null,
+        authorProd: await Promise.all(filteredAuthorProd),
+      });
+    }
+    return processedUsers;
   }
 
   async userById(id: string) {
@@ -166,7 +195,7 @@ export class UsersService {
     });
     if (!user) throw new HttpException('User not found', 400);
     const { userImage, authorProd, aboutme, ...userData } = user;
-    const userimage = await this.getFileFromGithub(user.userImage);
+    const userimage = await this.getFileFromGithub(userImage);
     let aboutmeimage = null;
     if (aboutme && aboutme.image) {
       aboutmeimage = await this.getFileFromGithub(aboutme.image);
@@ -186,7 +215,7 @@ export class UsersService {
     });
     return {
       ...userData,
-      imagePath: user.userImage,
+      imagePath: userImage,
       image: userimage || null,
       aboutme: aboutme
         ? { image: aboutmeimage || null, imagePath: aboutme.image }
