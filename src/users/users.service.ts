@@ -32,13 +32,18 @@ export class UsersService {
 
   async check(req: Request) {
     const User = req.user as User;
-    const userimage = await this.getFileFromGithub(User.userImage);
+      let userimage = null;
+    if (User.userImage) {
+      userimage = await this.getFileFromGithub(User.userImage);
+    }
     return {
       user: User,
       message: 'Checked',
-      image: userimage || User.userImage,
+      imagePath: User.userImage || null,
+      image: userimage || null,
     };
   }
+  
 
   async login(data: LoginDto) {
     const user = await this.prisma.user.findUnique({
@@ -144,36 +149,50 @@ export class UsersService {
   }
 
   async userById(id: string) {
-    const user = await this.prisma.user
-      .findUnique({
-        where: { id },
-        include: {
-          authorProd: { include: { author: { select: { id: true } } } },
-          aboutme: { select: { image: true } },
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        userImage: true,
+        authorProd: {
+          select: {
+            author: { select: { title: true, productImage: true } },
+          },
         },
-      })
-      .then(async (user) => {
-        if (!user) throw new HttpException('User not found', 400);
-        const {
-          password,
-          authorProd,
-          aboutme,
-          userImage,
-          ...userWithoutPassword
-        } = user;
-        const userimage = await this.getFileFromGithub(userImage);
-        const aboutmeimage = await this.getFileFromGithub(aboutme.image);
-        const filteredAuthorProd = authorProd.map((ap) => ({
-          author: ap.author,
-        }));
-        return {
-          ...userWithoutPassword,
-          authorProd: filteredAuthorProd,
-          image: userimage || userImage,
-          aboutme: { image: aboutmeimage || aboutmeimage.image },
-        };
-      });
-    return user;
+        aboutme: { select: { title: true, description: true, image: true } },
+      },
+    });
+    if (!user) throw new HttpException('User not found', 400);
+    const { userImage, authorProd, aboutme, ...userData } = user;
+    const userimage = await this.getFileFromGithub(user.userImage);
+    let aboutmeimage = null;
+    if (aboutme && aboutme.image) {
+      aboutmeimage = await this.getFileFromGithub(aboutme.image);
+    }
+    const filteredAuthorProd = authorProd.map(async (ap) => {
+      let productimage = null;
+      if (ap.author.productImage) {
+        productimage = await this.getFileFromGithub(ap.author.productImage);
+      }
+      return {
+        author: {
+          title: ap.author.title,
+          productImagePath: ap.author.productImage || null,
+          productImage: productimage || null,
+        },
+      };
+    });
+    return {
+      ...userData,
+      imagePath: user.userImage,
+      image: userimage || null,
+      aboutme: aboutme
+        ? { image: aboutmeimage || null, imagePath: aboutme.image }
+        : null,
+      authorProd: await Promise.all(filteredAuthorProd),
+    };
   }
 
   async updateByIdAdmin(id: string, data: Record<string, UpdateAdminDto>) {
