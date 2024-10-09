@@ -2,10 +2,11 @@ import { HttpException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateDto } from './dto/create.dto';
 import { UpdateDto } from './dto/update.dto';
+import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class ProductsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService, private userService: UsersService) {}
 
   allProducts() {
     return this.prisma.product.findMany({
@@ -15,6 +16,7 @@ export class ProductsService {
         title: true,
         description: true,
         publishDate: true,
+        productImage: true,
         author: {
           select: {
             authorProd: {
@@ -22,7 +24,7 @@ export class ProductsService {
             },
           },
         },
-        comments:{
+        comments: {
           select: {
             id: true,
             title: true,
@@ -35,7 +37,7 @@ export class ProductsService {
               },
             },
           },
-        }
+        },
       },
     });
   }
@@ -49,17 +51,69 @@ export class ProductsService {
         title: true,
         description: true,
         publishDate: true,
+        productImage: true,
         author: {
           select: {
             authorProd: {
-              select: { id: true, userImage: true, username: true },
+              select: { userImage: true, username: true },
+            },
+          },
+        },
+        comments: {
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            author: {
+              select: {
+                id: true,
+                username: true,
+                userImage: true,
+              },
             },
           },
         },
       },
     });
     if (!product) throw new HttpException('Product not found', 400);
-    return product;
+    const { productImage, author, comments, ...productData } = product;
+    const productimage = await this.userService.getFileFromGithub(product.productImage);
+    const filteredAuthor = author.map(async (ap) => {
+      let userimage = null 
+      if( ap.authorProd.userImage) {
+        userimage = await this.userService.getFileFromGithub(ap.authorProd.userImage)
+      }
+      return {
+        authorProd: {
+          userImagePath: ap.authorProd.userImage || null,
+          userImage: productimage || null,
+          username: ap.authorProd.username,
+        }
+      }
+    })
+    const processedComments = comments.map(async (comment) => {
+      let userImage = null;
+      if (comment.author.userImage) {
+        userImage = await this.userService.getFileFromGithub(comment.author.userImage);
+      }
+      return {
+        id: comment.id,
+        title: comment.title,
+        description: comment.description,
+        author: {
+          id: comment.author.id,
+          username: comment.author.username,
+          userImage: userImage || null,
+        },
+      };
+    })
+    return {
+      ...productData,
+      imagePath: productImage,
+      image: productimage || null,
+      author: await Promise.all(filteredAuthor),
+      comments: await Promise.all(processedComments),
+    };
   }
 
   async createProduct(data: CreateDto) {
