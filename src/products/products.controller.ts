@@ -6,6 +6,7 @@ import {
   Param,
   Post,
   Put,
+  UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -15,6 +16,7 @@ import { AdminInterceptor } from 'src/users/intercepters/admin.interceptor';
 import { CreateDto } from './dto/create.dto';
 import { UpdateDto } from './dto/update.dto';
 import { DevInterceptor } from 'src/users/intercepters/dev.interceptor';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('products')
 export class ProductsController {
@@ -50,11 +52,15 @@ export class ProductsController {
 
   @Put('/:id')
   @UseGuards(JwtGuard)
-  @UseInterceptors(AdminInterceptor)
-  async UpdateProductById(@Param('id') id: string, @Body() data: UpdateDto) {
+  @UseInterceptors(AdminInterceptor, FileInterceptor('file'))
+  async UpdateProductById(
+    @UploadedFile() file: Express.Multer.File,
+    @Param('id') id: string,
+    @Body() data: UpdateDto,
+  ) {
     return {
-      message: await this.productService.updateProductById(id, data),
-      statusCode: 200
+      message: await this.productService.updateProductById(id, data, file?.buffer, file?.originalname),
+      statusCode: 200,
     };
   }
 

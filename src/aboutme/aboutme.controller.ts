@@ -6,6 +6,7 @@ import {
   Post,
   Put,
   Req,
+  UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -16,6 +17,7 @@ import { AdminInterceptor } from 'src/users/intercepters/admin.interceptor';
 import { CreateDto } from './dto/create.dto';
 import { UpdateDto } from './dto/update.dto';
 import { Request } from 'express';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('aboutme')
 export class AboutmeController {
@@ -32,10 +34,19 @@ export class AboutmeController {
 
   @Put('/:id')
   @UseGuards(JwtGuard)
-  @UseInterceptors(DevInterceptor)
-  async UpdateAboutmeById(@Param('id') id: string, @Body() data: UpdateDto) {
+  @UseInterceptors(DevInterceptor, FileInterceptor('file'))
+  async UpdateAboutmeById(
+    @UploadedFile() file: Express.Multer.File,
+    @Param('id') id: string,
+    @Body() data: UpdateDto,
+  ) {
     return {
-      message: await this.aboutmeService.updateAboutmeById(id, data),
+      message: await this.aboutmeService.updateAboutmeById(
+        id,
+        data,
+        file.buffer,
+        file.originalname,
+      ),
       statusCode: 200,
     };
   }
@@ -54,9 +65,12 @@ export class AboutmeController {
   @Put('/:id/admin')
   @UseGuards(JwtGuard)
   @UseInterceptors(AdminInterceptor)
-  async UpdateAboutmeByIdAdmin(@Param('id') id: string, @Body() data: UpdateDto) {
+  async UpdateAboutmeByIdAdmin(
+    @Param('id') id: string,
+    @Body() data: UpdateDto,
+  ) {
     return {
-      message: await this.aboutmeService.updateAboutmeById(id, data),
+      message: await this.aboutmeService.updateAboutmeByIdAdmin(id, data),
       statusCode: 200,
     };
   }
@@ -64,5 +78,10 @@ export class AboutmeController {
   @Delete('/:id/admin')
   @UseGuards(JwtGuard)
   @UseInterceptors(AdminInterceptor)
-  DeleteAboutmeByIdAdmin() {}
+  async DeleteAboutmeByIdAdmin(@Param('id') id: string) {
+    return {
+      message: await this.aboutmeService.deleteAboutmeByIdAdmin(id),
+      statusCode: 204,
+    };
+  }
 }

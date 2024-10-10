@@ -6,9 +6,6 @@ export class UpdateDto {
     link?: string;
     @IsOptional()
     @IsString()
-    productImage?: string
-    @IsOptional()
-    @IsString()
     title?: string;
     @IsOptional()
     @IsString()

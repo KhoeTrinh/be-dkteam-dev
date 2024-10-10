@@ -74,7 +74,7 @@ export class UsersController {
 
   @Put('/:id')
   @UseGuards(JwtGuard)
-  @UseInterceptors(FileInterceptor('userImage'))
+  @UseInterceptors(FileInterceptor('file'))
   async UpdateById(
     @UploadedFile() file: Express.Multer.File,
     @Req() req: Request,

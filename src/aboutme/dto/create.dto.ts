@@ -9,10 +9,6 @@ export class CreateDto {
     @IsString()
     description: string
 
-    @IsOptional()
-    @IsString()
-    image?: string
-
     @IsNotEmpty()
     @IsString()
     author: string
