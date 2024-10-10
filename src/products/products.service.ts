@@ -58,7 +58,7 @@ export class ProductsService {
         return {
           authorProd: {
             userImagePath: ap.authorProd.userImage || null,
-            userImage: productimage || null,
+            userImage: userimage || null,
             username: ap.authorProd.username,
           },
         };
