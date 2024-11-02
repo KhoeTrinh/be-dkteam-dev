@@ -48,7 +48,6 @@ model UsersOnProducts {
 
 model Comment {
   id           String     @id @default(uuid())
-  title        String     
   description  String     @db.VarChar(200)
   publishDate  DateTime   @default(now())
   author       User       @relation(fields: [authorId], references: [id], onUpdate: Cascade, onDelete: Cascade)

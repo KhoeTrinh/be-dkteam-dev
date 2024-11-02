@@ -198,6 +198,8 @@ export class UsersService {
         username: true,
         email: true,
         userImage: true,
+        isDev: true,
+        isAdmin: true,
         authorProd: {
           select: {
             author: { select: { title: true, productImage: true } },
