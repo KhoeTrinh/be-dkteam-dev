@@ -7,7 +7,6 @@ import {
   Post,
   Put,
   Req,
-  UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -20,7 +19,6 @@ import { AdminInterceptor } from './intercepters/admin.interceptor';
 import { UpdateDto } from './dto/update.dto';
 import { UpdateAdminDto } from './dto/updateAdmin.dto';
 import { DevInterceptor } from './intercepters/dev.interceptor';
-import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('users')
 export class UsersController {
@@ -34,7 +32,6 @@ export class UsersController {
       status: res.message,
       message: res.user,
       statusCode: 200,
-      image: res.image,
     };
   }
 
@@ -74,9 +71,7 @@ export class UsersController {
 
   @Put('/:id')
   @UseGuards(JwtGuard)
-  @UseInterceptors(FileInterceptor('file'))
   async UpdateById(
-    @UploadedFile() file: Express.Multer.File,
     @Req() req: Request,
     @Param('id') id: string,
     @Body() data: UpdateDto,
@@ -85,8 +80,6 @@ export class UsersController {
       id,
       data,
       req,
-      file?.buffer,
-      file?.originalname,
     );
     req.user = result.token;
     return {

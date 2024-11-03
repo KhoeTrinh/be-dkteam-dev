@@ -17,7 +17,6 @@ import { AdminInterceptor } from 'src/users/intercepters/admin.interceptor';
 import { CreateDto } from './dto/create.dto';
 import { UpdateDto } from './dto/update.dto';
 import { Request } from 'express';
-import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('aboutme')
 export class AboutmeController {
@@ -34,9 +33,8 @@ export class AboutmeController {
 
   @Put('/:id')
   @UseGuards(JwtGuard)
-  @UseInterceptors(DevInterceptor, FileInterceptor('file'))
+  @UseInterceptors(DevInterceptor)
   async UpdateAboutmeById(
-    @UploadedFile() file: Express.Multer.File,
     @Param('id') id: string,
     @Body() data: UpdateDto,
   ) {
@@ -44,8 +42,6 @@ export class AboutmeController {
       message: await this.aboutmeService.updateAboutmeById(
         id,
         data,
-        file.buffer,
-        file.originalname,
       ),
       statusCode: 200,
     };

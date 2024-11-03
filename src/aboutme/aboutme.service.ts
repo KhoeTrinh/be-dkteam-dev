@@ -10,7 +10,6 @@ import { UsersService } from 'src/users/users.service';
 export class AboutmeService {
   constructor(
     private prisma: PrismaService,
-    private userService: UsersService,
   ) {}
 
   async createAboutme(data: CreateDto, req: Request) {
@@ -37,20 +36,11 @@ export class AboutmeService {
   async updateAboutmeById(
     id: string,
     data: UpdateDto,
-    fileContent: Buffer,
-    path: string,
   ) {
     const aboutme = await this.prisma.aboutme.findUnique({ where: { id: id } });
     if (!aboutme) throw new HttpException('About me not found', 400);
     if (id !== aboutme.id)
       throw new HttpException('You can not update another user aboutme', 400);
-    if (path) {
-      await this.userService.uploadFileToGithub(fileContent, path);
-      return this.prisma.aboutme.update({
-        where: { id: id },
-        data: { image: path },
-      });
-    }
     if (data.title && data.title !== aboutme.title)
       throw new HttpException('This title is already existed', 400);
     return this.prisma.aboutme.update({ where: { id: id }, data: data });

@@ -8,7 +8,6 @@ import { UsersService } from 'src/users/users.service';
 export class ProductsService {
   constructor(
     private prisma: PrismaService,
-    private userService: UsersService,
   ) {}
 
   async allProducts() {
@@ -30,7 +29,6 @@ export class ProductsService {
         comments: {
           select: {
             id: true,
-            title: true,
             description: true,
             author: {
               select: {
@@ -46,45 +44,27 @@ export class ProductsService {
     const processedProducts = [];
     for (const product of productArray) {
       const { productImage, author, comments, ...productData } = product;
-      const productimage =
-        await this.userService.getFileFromGithub(productImage);
       const filteredAuthor = author.map(async (ap) => {
-        let userimage = null;
-        if (ap.authorProd.userImage) {
-          userimage = await this.userService.getFileFromGithub(
-            ap.authorProd.userImage,
-          );
-        }
         return {
           authorProd: {
             userImagePath: ap.authorProd.userImage || null,
-            userImage: userimage || null,
             username: ap.authorProd.username,
           },
         };
       });
       const processedComments = comments.map(async (comment) => {
-        let userImage = null;
-        if (comment.author.userImage) {
-          userImage = await this.userService.getFileFromGithub(
-            comment.author.userImage,
-          );
-        }
         return {
           id: comment.id,
-          title: comment.title,
           description: comment.description,
           author: {
             id: comment.author.id,
             username: comment.author.username,
-            userImage: userImage || null,
           },
         };
       });
       processedProducts.push({
         ...productData,
         imagePath: productImage,
-        image: productimage || null,
         author: await Promise.all(filteredAuthor),
         comments: await Promise.all(processedComments),
       });
@@ -112,7 +92,6 @@ export class ProductsService {
         comments: {
           select: {
             id: true,
-            title: true,
             description: true,
             author: {
               select: {
@@ -127,46 +106,27 @@ export class ProductsService {
     });
     if (!product) throw new HttpException('Product not found', 400);
     const { productImage, author, comments, ...productData } = product;
-    const productimage = await this.userService.getFileFromGithub(
-      product.productImage,
-    );
     const filteredAuthor = author.map(async (ap) => {
-      let userimage = null;
-      if (ap.authorProd.userImage) {
-        userimage = await this.userService.getFileFromGithub(
-          ap.authorProd.userImage,
-        );
-      }
       return {
         authorProd: {
           userImagePath: ap.authorProd.userImage || null,
-          userImage: productimage || null,
           username: ap.authorProd.username,
         },
       };
     });
     const processedComments = comments.map(async (comment) => {
-      let userImage = null;
-      if (comment.author.userImage) {
-        userImage = await this.userService.getFileFromGithub(
-          comment.author.userImage,
-        );
-      }
       return {
         id: comment.id,
-        title: comment.title,
         description: comment.description,
         author: {
           id: comment.author.id,
           username: comment.author.username,
-          userImage: userImage || null,
         },
       };
     });
     return {
       ...productData,
       imagePath: productImage,
-      image: productimage || null,
       author: await Promise.all(filteredAuthor),
       comments: await Promise.all(processedComments),
     };
@@ -213,18 +173,9 @@ export class ProductsService {
   async updateProductById(
     id: string,
     data: UpdateDto,
-    fileContent: Buffer,
-    path: string,
   ) {
     const product = await this.prisma.product.findUnique({ where: { id: id } });
     if (!product) throw new HttpException('Product not found', 400);
-    if (path) {
-      await this.userService.uploadFileToGithub(fileContent, path);
-      return this.prisma.product.update({
-        where: { id: id },
-        data: { productImage: path },
-      });
-    }
     if (data.title && data.title !== product.title) {
       const findProduct = await this.prisma.product.findUnique({
         where: { title: data.title },

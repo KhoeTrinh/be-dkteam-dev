@@ -32,15 +32,10 @@ export class UsersService {
 
   async check(req: Request) {
     const User = req.user as User;
-    let userimage = null;
-    if (User.userImage) {
-      userimage = await this.getFileFromGithub(User.userImage);
-    }
     return {
       user: User,
       message: 'Checked',
       imagePath: User.userImage || null,
-      image: userimage || null,
     };
   }
 
@@ -74,25 +69,12 @@ export class UsersService {
     return 'Ok';
   }
 
-  async updateById(
-    id: string,
-    data: UpdateDto,
-    req: Request,
-    fileContent: Buffer,
-    path: string,
-  ) {
+  async updateById(id: string, data: UpdateDto, req: Request) {
     const User = req.user as User;
     const user = await this.prisma.user.findUnique({ where: { id: id } });
     if (!user) throw new HttpException('User not found', 400);
     if (User.id !== user.id)
       throw new HttpException('You can not updated another user', 400);
-    if(path) {
-      await this.uploadFileToGithub(fileContent, path)
-      const updatedUser = await this.prisma.user.update({ where: {id: id}, data: { userImage: path}})
-      delete updatedUser.password
-      const token = this.jwtService.sign(updatedUser)
-      return { user: updatedUser, token}
-    }
     if (data.email && data.email !== user.email) {
       const emailExists = await this.prisma.user.findUnique({
         where: { email: data.email },
@@ -159,31 +141,18 @@ export class UsersService {
     const processedUsers = [];
     for (const user of userArray) {
       const { userImage, authorProd, aboutme, ...userData } = user;
-      const userimage = await this.getFileFromGithub(userImage);
-      let aboutmeimage = null;
-      if (aboutme && aboutme.image) {
-        aboutmeimage = await this.getFileFromGithub(aboutme.image);
-      }
       const filteredAuthorProd = authorProd.map(async (ap) => {
-        let productimage = null;
-        if (ap.author.productImage) {
-          productimage = await this.getFileFromGithub(ap.author.productImage);
-        }
         return {
           author: {
             title: ap.author.title,
             productImagePath: ap.author.productImage || null,
-            productImage: productimage || null,
           },
         };
       });
       processedUsers.push({
         ...userData,
         imagePath: userImage,
-        image: userimage || null,
-        aboutme: aboutme
-          ? { image: aboutmeimage || null, imagePath: aboutme.image }
-          : null,
+        aboutme: aboutme ? { imagePath: aboutme.image } : null,
         authorProd: await Promise.all(filteredAuthorProd),
       });
     }
@@ -210,31 +179,18 @@ export class UsersService {
     });
     if (!user) throw new HttpException('User not found', 400);
     const { userImage, authorProd, aboutme, ...userData } = user;
-    const userimage = await this.getFileFromGithub(userImage);
-    let aboutmeimage = null;
-    if (aboutme && aboutme.image) {
-      aboutmeimage = await this.getFileFromGithub(aboutme.image);
-    }
     const filteredAuthorProd = authorProd.map(async (ap) => {
-      let productimage = null;
-      if (ap.author.productImage) {
-        productimage = await this.getFileFromGithub(ap.author.productImage);
-      }
       return {
         author: {
           title: ap.author.title,
           productImagePath: ap.author.productImage || null,
-          productImage: productimage || null,
         },
       };
     });
     return {
       ...userData,
       imagePath: userImage,
-      image: userimage || null,
-      aboutme: aboutme
-        ? { image: aboutmeimage || null, imagePath: aboutme.image }
-        : null,
+      aboutme: aboutme ? { imagePath: aboutme.image } : null,
       authorProd: await Promise.all(filteredAuthorProd),
     };
   }
@@ -299,52 +255,52 @@ export class UsersService {
     return 'Ok';
   }
 
-  async getFileFromGithub(path: string) {
-    if (!path) throw new HttpException('Please provide a path', 400);
-    const url = `${this.githubApiUrl}/repos/${this.owner}/${this.repo}/contents/${path}`;
-    try {
-      const res = await axios.get(url, {
-        headers: {
-          Authorization: `token ${this.personalAccessToken}`,
-        },
-      });
-      return res.data.content;
-    } catch {}
-  }
+  // async getFileFromGithub(path: string) {
+  //   if (!path) throw new HttpException('Please provide a path', 400);
+  //   const url = `${this.githubApiUrl}/repos/${this.owner}/${this.repo}/contents/${path}`;
+  //   try {
+  //     const res = await axios.get(url, {
+  //       headers: {
+  //         Authorization: `token ${this.personalAccessToken}`,
+  //       },
+  //     });
+  //     return res.data.content;
+  //   } catch {}
+  // }
 
-  async uploadFileToGithub(fileContent: Buffer, path: string) {
-    if (!fileContent) throw new HttpException('Please provide a file', 400);
-    const url = `${this.githubApiUrl}/repos/${this.owner}/${this.repo}/contents/${path}`;
-    const encodedContent = fileContent.toString('base64');
-    let sha = null;
-    try {
-      const res = await axios.get(url, {
-        headers: {
-          Authorization: `token ${this.personalAccessToken}`,
-        },
-      });
-      if (res.status !== 200)
-        throw new HttpException('Invalid access token', 400);
-      sha = res.data.sha;
-    } catch {
-      throw new HttpException('Error fetching commit', 500);
-    }
-    const data = {
-      message: this.message,
-      content: encodedContent,
-      sha,
-    };
-    try {
-      const res = await axios.put(url, data, {
-        headers: {
-          Authorization: `token ${this.personalAccessToken}`,
-        },
-      });
-      if (res.status !== 200)
-        throw new HttpException('Invalid access token', 400);
-      return res.data;
-    } catch {
-      throw new HttpException('Error updating file', 500);
-    }
-  }
+  // async uploadFileToGithub(fileContent: Buffer, path: string) {
+  //   if (!fileContent) throw new HttpException('Please provide a file', 400);
+  //   const url = `${this.githubApiUrl}/repos/${this.owner}/${this.repo}/contents/${path}`;
+  //   const encodedContent = fileContent.toString('base64');
+  //   let sha = null;
+  //   try {
+  //     const res = await axios.get(url, {
+  //       headers: {
+  //         Authorization: `token ${this.personalAccessToken}`,
+  //       },
+  //     });
+  //     if (res.status !== 200)
+  //       throw new HttpException('Invalid access token', 400);
+  //     sha = res.data.sha;
+  //   } catch {
+  //     throw new HttpException('Error fetching commit', 500);
+  //   }
+  //   const data = {
+  //     message: this.message,
+  //     content: encodedContent,
+  //     sha,
+  //   };
+  //   try {
+  //     const res = await axios.put(url, data, {
+  //       headers: {
+  //         Authorization: `token ${this.personalAccessToken}`,
+  //       },
+  //     });
+  //     if (res.status !== 200)
+  //       throw new HttpException('Invalid access token', 400);
+  //     return res.data;
+  //   } catch {
+  //     throw new HttpException('Error updating file', 500);
+  //   }
+  // }
 }

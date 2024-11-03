@@ -6,11 +6,10 @@ import { User } from '@prisma/client';
 import { UpdateDto } from './dto/update.dto';
 import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
-import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class CommentsService {
-  constructor(private prisma: PrismaService, private userService: UsersService) {}
+  constructor(private prisma: PrismaService) {}
 
   async createComment(data: CreateDto, req: Request) {
     const User = req.user as User;
