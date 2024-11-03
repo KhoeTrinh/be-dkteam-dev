@@ -9,7 +9,6 @@ import { UpdateDto } from './dto/update.dto';
 import { UpdateAdminDto } from './dto/updateAdmin.dto';
 import { validateSync } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
-import axios from 'axios';
 
 @Injectable()
 export class UsersService {
@@ -248,53 +247,4 @@ export class UsersService {
     await this.prisma.user.deleteMany({ where: { id: { in: idArray } } });
     return 'Ok';
   }
-
-  // async getFileFromGithub(path: string) {
-  //   if (!path) throw new HttpException('Please provide a path', 400);
-  //   const url = `${this.githubApiUrl}/repos/${this.owner}/${this.repo}/contents/${path}`;
-  //   try {
-  //     const res = await axios.get(url, {
-  //       headers: {
-  //         Authorization: `token ${this.personalAccessToken}`,
-  //       },
-  //     });
-  //     return res.data.content;
-  //   } catch {}
-  // }
-
-  // async uploadFileToGithub(fileContent: Buffer, path: string) {
-  //   if (!fileContent) throw new HttpException('Please provide a file', 400);
-  //   const url = `${this.githubApiUrl}/repos/${this.owner}/${this.repo}/contents/${path}`;
-  //   const encodedContent = fileContent.toString('base64');
-  //   let sha = null;
-  //   try {
-  //     const res = await axios.get(url, {
-  //       headers: {
-  //         Authorization: `token ${this.personalAccessToken}`,
-  //       },
-  //     });
-  //     if (res.status !== 200)
-  //       throw new HttpException('Invalid access token', 400);
-  //     sha = res.data.sha;
-  //   } catch {
-  //     throw new HttpException('Error fetching commit', 500);
-  //   }
-  //   const data = {
-  //     message: this.message,
-  //     content: encodedContent,
-  //     sha,
-  //   };
-  //   try {
-  //     const res = await axios.put(url, data, {
-  //       headers: {
-  //         Authorization: `token ${this.personalAccessToken}`,
-  //       },
-  //     });
-  //     if (res.status !== 200)
-  //       throw new HttpException('Invalid access token', 400);
-  //     return res.data;
-  //   } catch {
-  //     throw new HttpException('Error updating file', 500);
-  //   }
-  // }
 }

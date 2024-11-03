@@ -1,4 +1,4 @@
-import { Controller, Delete, Get, Post } from '@nestjs/common';
+import { Controller, Delete, Get, Post, Put } from '@nestjs/common';
 
 @Controller('github-image')
 export class GithubImageController {
@@ -7,6 +7,9 @@ export class GithubImageController {
 
     @Post()
     UploadImage() {}
+
+    @Put()
+    UpdateImage() {}
 
     @Delete()
     DeleteImage() {}
