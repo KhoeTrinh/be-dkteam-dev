@@ -1,6 +1,7 @@
 import { HttpException, Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { lastValueFrom } from 'rxjs';
+import { extname } from 'path';
 
 @Injectable()
 export class GithubImageService {
@@ -18,12 +19,37 @@ export class GithubImageService {
 
   constructor(private httpService: HttpService) {}
   async getImage(path: string) {
-    if (!path) throw new HttpException('Please provide a path', 4000);
+    if (!path) throw new HttpException('Please provide a path', 400);
     try {
       const res = await lastValueFrom(
         this.httpService.get(`${this.url}/${path}`, this.headers),
       );
-      return res.data.content;
+      const { download_url, content } = res.data;
+      const buffer = Buffer.from(content, 'base64');
+      const cleanUrl = download_url.split('?')[0];
+      const extension = extname(cleanUrl).toLowerCase();
+      let mimeType: string;
+      switch (extension) {
+        case '.jpg':
+        case '.jpeg':
+          mimeType = 'image/jpeg';
+          break;
+        case '.png':
+          mimeType = 'image/png';
+          break;
+        case '.gif':
+          mimeType = 'image/gif';
+          break;
+        case '.bmp':
+          mimeType = 'image/bmp';
+          break;
+        case '.webp':
+          mimeType = 'image/webp';
+          break;
+        default:
+          mimeType = 'application/octet-stream';
+      }
+      return { buffer, mimeType };
     } catch (err) {}
   }
 
@@ -46,11 +72,35 @@ export class GithubImageService {
       const res = await lastValueFrom(
         this.httpService.put(`${this.url}/${path}`, data, this.headers),
       );
-      return res.data.content
+      return res.data.content;
     } catch (err) {}
   }
 
-  updateImage() {}
-
-  deleteImage() {}
+  async deleteImage(path: string) {
+    if (!path) throw new HttpException('Please provide a path', 400);
+    let sha = null;
+    try {
+      const res = await lastValueFrom(
+        this.httpService.get(`${this.url}/${path}`, this.headers),
+      );
+      sha = res.data.sha;
+    } catch (err) {
+      throw new HttpException('File not found', 400)
+    }
+    const data = {
+      message: this.message,
+      sha,
+    };
+    try {
+      await lastValueFrom(
+        this.httpService.delete(`${this.url}/${path}`, {
+          data: data,
+          headers: {
+            Authorization: `token ${this.personalAccessToken}`,
+          },
+        }),
+      );
+      return 'Ok';
+    } catch (err) {}
+  }
 }
