@@ -15,7 +15,7 @@ datasource db {
 
 model User {
   id           String     @id @default(uuid())
-  userImage    String?    @default("/assets/user-default-profile-image.webp")
+  userImage    String?    @default("assets/svg/user-svgrepo-com.svg")
   username     String    
   email        String     @unique
   password     String
@@ -29,7 +29,7 @@ model User {
 model Product {
   id           String     @id @default(uuid())
   link         String 
-  productImage String?    @default("/assets/product-default-profile-image.jpg")
+  productImage String?    @default("assets/svg/gear-10-svgrepo-com.svg")
   title        String     @unique
   description  String     @db.VarChar(200)
   publishDate  DateTime   @default(now())
@@ -60,7 +60,7 @@ model Aboutme {
   id           String     @id @default(uuid())
   title        String     @unique
   description  String     @db.VarChar(200)
-  image        String?    @default("/assets/aboutme-default-profile-image.jpg")
+  image        String?    @default("assets/svg/user-svgrepo-com.svg")
   author       User       @relation(fields: [authorId], references: [id], onUpdate: Cascade, onDelete: Cascade)
   authorId     String     @unique
 }

@@ -35,6 +35,9 @@ export class UsersService {
   async login(data: LoginDto) {
     const user = await this.prisma.user.findUnique({
       where: { email: data.email },
+      include: {
+        aboutme: true
+      }
     });
     if (!user) throw new HttpException('User not found', 400);
     const isMatch = await bcrypt.compare(data.password, user.password);
@@ -52,6 +55,9 @@ export class UsersService {
     const hash = await this.hashPass(password);
     const user = await this.prisma.user.create({
       data: { password: hash, ...data },
+      include: {
+        aboutme: true
+      }
     });
     const { password: _, ...userData } = user;
     const token = this.jwtService.sign(userData);
