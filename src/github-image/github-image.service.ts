@@ -82,11 +82,11 @@ export class GithubImageService {
     try {
       const res = await lastValueFrom(
         this.httpService.get(`${this.url}/${path}`, this.headers),
-      );
+      ).catch(() => {
+        throw new HttpException('File not found', 400);
+      });
       sha = res.data.sha;
-    } catch (err) {
-      throw new HttpException('File not found', 400)
-    }
+    } catch (err) {}
     const data = {
       message: this.message,
       sha,
