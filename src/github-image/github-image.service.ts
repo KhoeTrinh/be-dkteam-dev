@@ -3,6 +3,7 @@ import { HttpService } from '@nestjs/axios';
 import { lastValueFrom } from 'rxjs';
 import { extname } from 'path';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class GithubImageService {
@@ -21,17 +22,23 @@ export class GithubImageService {
   constructor(
     private httpService: HttpService,
     private prisma: PrismaService,
+    private jwtService: JwtService,
   ) {}
   async getImage(path: string) {
     if (!path) throw new HttpException('Please provide a path', 400);
     try {
       const res = await lastValueFrom(
-        this.httpService.get(`${this.url}/${path}`, {
-          ...this.headers,
+        this.httpService.get(`${this.url}/${path}`, this.headers),
+      );
+      console.log(res.data);
+      const downloadUrl = res.data.download_url;
+      if (!downloadUrl) throw new HttpException('Image not found', 400);
+      const imageRes = await lastValueFrom(
+        this.httpService.get(downloadUrl, {
           responseType: 'arraybuffer',
         }),
       );
-      return Buffer.from(res.data);
+      return Buffer.from(imageRes.data);
     } catch (err) {}
   }
 
@@ -66,11 +73,15 @@ export class GithubImageService {
       }
       const { model, field } = modelMapping[type];
       const updateData = { [field]: path };
-      await this.prisma[model].update({
+      const dataToken = await this.prisma[model].update({
         where: { id },
         data: updateData,
       });
-      return res.data.content;
+      let jwtToken = null;
+      if (normalizedType === 'user') {
+        jwtToken = this.jwtService.sign(dataToken);
+      }
+      return { message: res.data.content, token: jwtToken };
     } catch (err) {
       throw err instanceof HttpException
         ? err
