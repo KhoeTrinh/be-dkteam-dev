@@ -18,15 +18,11 @@ export class GithubImageController {
   constructor(private githubImageService: GithubImageService) {}
   @Post('/get')
   async GetImage(@Body() path: { path: string }, @Res() res: Response) {
-    const { buffer, mimeType } = await this.githubImageService.getImage(
-      path.path,
-    );
+    const buffer = await this.githubImageService.getImage(path.path);
     res.set({
-      'Content-Type': mimeType,
-      'Content-Disposition': `attachment; filename="image${mimeType.split('/')[1]}"`,
-      'Content-Length': buffer.length,
-    });
-    res.status(HttpStatus.OK).send(buffer);
+      'Content-Type': 'image/jpeg'
+    })
+    res.send(buffer);
   }
 
   @Post()
@@ -43,12 +39,20 @@ export class GithubImageController {
       },
     }),
   )
-  UploadImage(@UploadedFile() file: Express.Multer.File) {
-    return this.githubImageService.uploadImage(file.buffer, file.originalname);
+  UploadImage(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() data: { id: string; type: string },
+  ) {
+    return this.githubImageService.uploadImage(
+      file.buffer,
+      file.originalname,
+      data.id,
+      data.type,
+    );
   }
 
   @Delete()
-  DeleteImage(@Body() path: { path: string }) {
-    return this.githubImageService.deleteImage(path.path);
+  DeleteImage(@Body() data: { path: string; id: string; type: string }) {
+    return this.githubImageService.deleteImage(data.path, data.id, data.type);
   }
 }

@@ -2,6 +2,7 @@ import { HttpException, Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { lastValueFrom } from 'rxjs';
 import { extname } from 'path';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class GithubImageService {
@@ -17,43 +18,24 @@ export class GithubImageService {
     },
   };
 
-  constructor(private httpService: HttpService) {}
+  constructor(
+    private httpService: HttpService,
+    private prisma: PrismaService,
+  ) {}
   async getImage(path: string) {
     if (!path) throw new HttpException('Please provide a path', 400);
     try {
       const res = await lastValueFrom(
-        this.httpService.get(`${this.url}/${path}`, this.headers),
+        this.httpService.get(`${this.url}/${path}`, {
+          ...this.headers,
+          responseType: 'arraybuffer',
+        }),
       );
-      const { download_url, content } = res.data;
-      const buffer = Buffer.from(content, 'base64');
-      const cleanUrl = download_url.split('?')[0];
-      const extension = extname(cleanUrl).toLowerCase();
-      let mimeType: string;
-      switch (extension) {
-        case '.jpg':
-        case '.jpeg':
-          mimeType = 'image/jpeg';
-          break;
-        case '.png':
-          mimeType = 'image/png';
-          break;
-        case '.gif':
-          mimeType = 'image/gif';
-          break;
-        case '.bmp':
-          mimeType = 'image/bmp';
-          break;
-        case '.webp':
-          mimeType = 'image/webp';
-          break;
-        default:
-          mimeType = 'application/octet-stream';
-      }
-      return { buffer, mimeType };
+      return Buffer.from(res.data);
     } catch (err) {}
   }
 
-  async uploadImage(file: Buffer, path: string) {
+  async uploadImage(file: Buffer, path: string, id: string, type: string) {
     if (!file) throw new HttpException('Please provide a file', 400);
     const encodedContent = file.toString('base64');
     let sha = null;
@@ -72,11 +54,31 @@ export class GithubImageService {
       const res = await lastValueFrom(
         this.httpService.put(`${this.url}/${path}`, data, this.headers),
       );
+      const modelMapping: { [key: string]: { model: string; field: string } } =
+        {
+          user: { model: 'user', field: 'userImage' },
+          product: { model: 'product', field: 'productImage' },
+          aboutme: { model: 'aboutme', field: 'image' },
+        };
+      const normalizedType = type.trim().toLowerCase();
+      if (!modelMapping.hasOwnProperty(normalizedType)) {
+        throw new HttpException('Invalid type', 400);
+      }
+      const { model, field } = modelMapping[type];
+      const updateData = { [field]: path };
+      await this.prisma[model].update({
+        where: { id },
+        data: updateData,
+      });
       return res.data.content;
-    } catch (err) {}
+    } catch (err) {
+      throw err instanceof HttpException
+        ? err
+        : new HttpException('Image upload failed', 500);
+    }
   }
 
-  async deleteImage(path: string) {
+  async deleteImage(path: string, id: string, type: string) {
     if (!path) throw new HttpException('Please provide a path', 400);
     let sha = null;
     try {
@@ -95,12 +97,43 @@ export class GithubImageService {
       await lastValueFrom(
         this.httpService.delete(`${this.url}/${path}`, {
           data: data,
-          headers: {
-            Authorization: `token ${this.personalAccessToken}`,
-          },
+          ...this.headers,
         }),
       );
+      const modelMapping: {
+        [key: string]: { model: string; field: string; image: string };
+      } = {
+        user: {
+          model: 'user',
+          field: 'userImage',
+          image: 'assets/svg/user-svgrepo-com.svg',
+        },
+        product: {
+          model: 'product',
+          field: 'productImage',
+          image: 'assets/svg/gear-10-svgrepo-com.svg',
+        },
+        aboutme: {
+          model: 'aboutme',
+          field: 'image',
+          image: 'assets/svg/user-svgrepo-com.svg',
+        },
+      };
+      const normalizedType = type.trim().toLowerCase();
+      if (!modelMapping.hasOwnProperty(normalizedType)) {
+        throw new HttpException('Invalid type', 400);
+      }
+      const { model, field, image } = modelMapping[type];
+      const updateData = { [field]: image };
+      await this.prisma[model].update({
+        where: { id },
+        data: updateData,
+      });
       return 'Ok';
-    } catch (err) {}
+    } catch (err) {
+      throw err instanceof HttpException
+        ? err
+        : new HttpException('Image upload failed', 500);
+    }
   }
 }
