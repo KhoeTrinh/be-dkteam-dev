@@ -30,7 +30,6 @@ export class GithubImageService {
       const res = await lastValueFrom(
         this.httpService.get(`${this.url}/${path}`, this.headers),
       );
-      console.log(res.data);
       const downloadUrl = res.data.download_url;
       if (!downloadUrl) throw new HttpException('Image not found', 400);
       const imageRes = await lastValueFrom(
