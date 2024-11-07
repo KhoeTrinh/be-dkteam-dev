@@ -106,6 +106,9 @@ export class UsersService {
     const updatedUser = await this.prisma.user.update({
       where: { id },
       data: updatedData,
+      include: {
+        aboutme: true
+      }
     });
     delete updatedUser.password;
     const token = this.jwtService.sign(updatedUser);
