@@ -51,15 +51,7 @@ export class GithubImageController {
   async UploadImage(
     @UploadedFile() file: Express.Multer.File,
     @Body() data: { id: string; type: string },
-    context: ExecutionContext,
   ) {
-    if (data.type === 'product') {
-      const isAuth = await this.jwtGuard.canActivate(context);
-      if (!isAuth) throw new HttpException('Unauthorized', 400);
-      await this.adminInterceptor.intercept(context, {
-        handle: () => of(null),
-      });
-    }
     return this.githubImageService.uploadImage(
       file.buffer,
       file.originalname,

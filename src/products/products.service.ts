@@ -6,9 +6,7 @@ import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class ProductsService {
-  constructor(
-    private prisma: PrismaService,
-  ) {}
+  constructor(private prisma: PrismaService) {}
 
   async allProducts() {
     const productArray = await this.prisma.product.findMany({
@@ -85,7 +83,7 @@ export class ProductsService {
         author: {
           select: {
             authorProd: {
-              select: { userImage: true, username: true },
+              select: { userImage: true, username: true, id: true },
             },
           },
         },
@@ -111,6 +109,7 @@ export class ProductsService {
         authorProd: {
           userImagePath: ap.authorProd.userImage || null,
           username: ap.authorProd.username,
+          id: ap.authorProd.id
         },
       };
     });
@@ -170,10 +169,7 @@ export class ProductsService {
     return product;
   }
 
-  async updateProductById(
-    id: string,
-    data: UpdateDto,
-  ) {
+  async updateProductById(id: string, data: UpdateDto) {
     const product = await this.prisma.product.findUnique({ where: { id: id } });
     if (!product) throw new HttpException('Product not found', 400);
     if (data.title && data.title !== product.title) {
