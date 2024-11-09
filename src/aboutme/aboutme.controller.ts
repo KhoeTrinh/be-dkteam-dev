@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   Param,
   Post,
   Put,
@@ -21,6 +22,16 @@ import { Request } from 'express';
 @Controller('aboutme')
 export class AboutmeController {
   constructor(private aboutmeService: AboutmeService) {}
+
+  @Get('/:id')
+  @UseGuards(JwtGuard)
+  async GetAboutme(@Param('id') id: string) {
+    return {
+      message: await this.aboutmeService.getAboutme(id),
+      statusCode: 200,
+    };
+  }
+
   @Post('/')
   @UseGuards(JwtGuard)
   @UseInterceptors(DevInterceptor)
@@ -34,15 +45,9 @@ export class AboutmeController {
   @Put('/:id')
   @UseGuards(JwtGuard)
   @UseInterceptors(DevInterceptor)
-  async UpdateAboutmeById(
-    @Param('id') id: string,
-    @Body() data: UpdateDto,
-  ) {
+  async UpdateAboutmeById(@Param('id') id: string, @Body() data: UpdateDto) {
     return {
-      message: await this.aboutmeService.updateAboutmeById(
-        id,
-        data,
-      ),
+      message: await this.aboutmeService.updateAboutmeById(id, data),
       statusCode: 200,
     };
   }

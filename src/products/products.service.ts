@@ -32,7 +32,7 @@ export class ProductsService {
               select: {
                 id: true,
                 username: true,
-                userImage: true,
+                userImage: true
               },
             },
           },
@@ -57,6 +57,7 @@ export class ProductsService {
           author: {
             id: comment.author.id,
             username: comment.author.username,
+            userImage: comment.author.userImage || null,
           },
         };
       });
@@ -120,6 +121,7 @@ export class ProductsService {
         author: {
           id: comment.author.id,
           username: comment.author.username,
+          userImage: comment.author.userImage || null,
         },
       };
     });

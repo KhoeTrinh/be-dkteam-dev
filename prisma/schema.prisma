@@ -58,7 +58,7 @@ model Comment {
 
 model Aboutme {
   id           String     @id @default(uuid())
-  title        String     @unique
+  title        String     
   description  String     @db.VarChar(200)
   image        String?    @default("assets/svg/user-svgrepo-com.svg")
   author       User       @relation(fields: [authorId], references: [id], onUpdate: Cascade, onDelete: Cascade)

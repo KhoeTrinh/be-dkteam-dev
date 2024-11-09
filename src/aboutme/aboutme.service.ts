@@ -4,7 +4,6 @@ import { CreateDto } from './dto/create.dto';
 import { UpdateDto } from './dto/update.dto';
 import { Request } from 'express';
 import { User } from '@prisma/client';
-import { UsersService } from 'src/users/users.service';
 
 @Injectable()
 export class AboutmeService {
@@ -12,15 +11,16 @@ export class AboutmeService {
     private prisma: PrismaService,
   ) {}
 
+  async getAboutme(id: string) {
+    const aboutme = await this.prisma.aboutme.findUnique({ where: { authorId: id} });
+    if (!aboutme) throw new HttpException('About me not found', 400);
+    return aboutme;
+  }
+
   async createAboutme(data: CreateDto, req: Request) {
-    const findAboutme = await this.prisma.aboutme.findUnique({
-      where: { title: data.title },
-    });
     const User = req.user as User;
     if (User.id !== data.author)
       throw new HttpException('You can not create aboutme for other user', 400);
-    if (findAboutme)
-      throw new HttpException('This title is already existed', 400);
     const findUser = await this.prisma.user.findUnique({
       where: { id: data.author },
       include: { aboutme: true },
@@ -41,8 +41,6 @@ export class AboutmeService {
     if (!aboutme) throw new HttpException('About me not found', 400);
     if (id !== aboutme.id)
       throw new HttpException('You can not update another user aboutme', 400);
-    if (data.title && data.title !== aboutme.title)
-      throw new HttpException('This title is already existed', 400);
     return this.prisma.aboutme.update({ where: { id: id }, data: data });
   }
 
@@ -58,8 +56,6 @@ export class AboutmeService {
   async updateAboutmeByIdAdmin(id: string, data: UpdateDto) {
     const aboutme = await this.prisma.aboutme.findUnique({ where: { id: id } });
     if (!aboutme) throw new HttpException('About me not found', 400);
-    if (data.title && data.title !== aboutme.title)
-      throw new HttpException('This title is already existed', 400);
     return this.prisma.aboutme.update({ where: { id: id }, data: data });
   }
 
